@@ -29,6 +29,11 @@ plus row/column operation traces. It validates the JSON-compatible schema,
 replays row ops then column ops, checks recorded transforms against identity
 replay, and verifies `U * input * V = D` using exact integer arithmetic.
 
+The v0.6 Lean checker currently covers small RREF JSON certificates over prime
+finite fields. It parses JSON directly, replays `swap`/`scale`/`add` row ops,
+checks the final RREF, and requires the supplied pivot list to match the pivots
+derived from the final matrix. SNF Lean checking remains a follow-up slice.
+
 ## Correctness Model
 
 - All verifier paths are exact integer/modular arithmetic.
@@ -102,6 +107,12 @@ nf-agent benchmark rref \
   --count 4 \
   --checkpoint /tmp/rref_pivot_smoke_ckpt \
   --max-steps 8
+nf-agent report rref-certificate \
+  --rows 2 \
+  --cols 3 \
+  --p 5 \
+  --seed 0 \
+  --teacher leftmost
 cd lean && lake build
 ```
 
@@ -168,7 +179,8 @@ integers: `initial_max_abs`, `max_abs_seen`, `initial_bitlength`,
   replay checks, HNF predicates, density metrics, and exact coefficient-growth
   reporting.
 - `v0.5`: SNF certificates with `(D,U,V)` and trace replay.
-- `v0.6`: Lean checker for small exported RREF/SNF certificates.
+- `v0.6`: Lean checker for small exported RREF JSON certificates; SNF Lean
+  checker follow-up.
 - `v0.7`: paper-style benchmark report.
 - `v0.8`: HNF training/rollout, DAgger, policy gradient, and verifier beam
   search as explicit experimental branches.
