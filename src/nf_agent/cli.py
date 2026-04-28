@@ -1,8 +1,10 @@
 import json
-from typing import Any
+from typing import Any, cast
 
 import click
 
+from nf_agent.benchmarks import RREFBenchmarkConfig, run_rref_benchmark
+from nf_agent.benchmarks.rref_benchmark import BenchmarkSource, MatrixFamily
 from nf_agent.data.matrix_families import dense_random_matrix, sparse_random_matrix
 from nf_agent.data.rref_shards import write_rref_shard
 from nf_agent.env.rref_modp import RowOp, rref_leftmost
@@ -193,6 +195,72 @@ def benchmark_smoke() -> None:
     matrix = dense_random_matrix(rows=4, cols=4, p=101, seed=0)
     result = rref_leftmost(matrix, 101)
     _emit_json({"matrix_count": 1, "trace_length": len(result.ops), "rank": len(result.pivots)})
+
+
+@benchmark.command("rref")
+@click.option("--source", type=click.Choice(["generated", "shard"]), required=True)
+@click.option("--count", type=int, default=None)
+@click.option("--rows", type=int, default=None)
+@click.option("--cols", type=int, default=None)
+@click.option("--p", "modulus", type=int, default=101, show_default=True)
+@click.option(
+    "--family",
+    type=click.Choice(["dense", "sparse", "low_rank"]),
+    default="dense",
+    show_default=True,
+)
+@click.option("--seed-start", type=int, default=0, show_default=True)
+@click.option("--density", type=float, default=None)
+@click.option("--rank", type=int, default=None)
+@click.option("--data", "data_path", type=click.Path(dir_okay=False), default=None)
+@click.option("--model-data", "model_data_path", type=click.Path(dir_okay=False), default=None)
+@click.option("--checkpoint", "checkpoint_dir", type=click.Path(file_okay=False), default=None)
+@click.option("--max-steps", type=int, default=None)
+@click.option(
+    "--hidden-size",
+    "hidden_sizes",
+    type=int,
+    multiple=True,
+    help="Hidden layer width. Repeat for multiple layers; default is 256,256.",
+)
+def benchmark_rref(
+    source: str,
+    count: int | None,
+    rows: int | None,
+    cols: int | None,
+    modulus: int,
+    family: str,
+    seed_start: int,
+    density: float | None,
+    rank: int | None,
+    data_path: str | None,
+    model_data_path: str | None,
+    checkpoint_dir: str | None,
+    max_steps: int | None,
+    hidden_sizes: tuple[int, ...],
+) -> None:
+    try:
+        result = run_rref_benchmark(
+            RREFBenchmarkConfig(
+                source=cast(BenchmarkSource, source),
+                count=count,
+                rows=rows,
+                cols=cols,
+                modulus=modulus,
+                family=cast(MatrixFamily, family),
+                seed_start=seed_start,
+                density=density,
+                rank=rank,
+                data_path=data_path,
+                model_data_path=model_data_path,
+                checkpoint_dir=checkpoint_dir,
+                max_steps=max_steps,
+                hidden_sizes=hidden_sizes or (256, 256),
+            )
+        )
+    except (TypeError, ValueError, IndexError, ZeroDivisionError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(result)
 
 
 @main.group()
