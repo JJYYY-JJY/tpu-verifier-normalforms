@@ -15,6 +15,21 @@ from nf_agent.env.rref_modp import is_rref_modp, replay_row_ops
 CONFIG = Path("configs/rref_8x8_mod101.yaml")
 
 
+def _write_config(tmp_path: Path, *, teacher: str) -> Path:
+    config_path = tmp_path / f"rref_{teacher}.yaml"
+    config_path.write_text(
+        "task: rref\n"
+        "field:\n"
+        "  modulus: 101\n"
+        "matrix:\n"
+        "  family: dense\n"
+        "  rows: 3\n"
+        "  cols: 3\n"
+        f"teacher: {teacher}\n"
+    )
+    return config_path
+
+
 def test_generate_rref_shard_has_fixed_shapes_and_dtypes() -> None:
     shard = generate_rref_shard(config_path=CONFIG, count=5, seed_start=0)
 
@@ -93,6 +108,22 @@ def test_encoded_ops_replay_to_finals_and_finals_are_rref() -> None:
         assert is_rref_modp(final, 101)
 
 
+def test_generate_rref_shard_supports_min_fill_teacher(tmp_path: Path) -> None:
+    config_path = _write_config(tmp_path, teacher="min_fill")
+
+    shard = generate_rref_shard(config_path=config_path, count=4, seed_start=0)
+    metadata = json.loads(str(shard["metadata_json"]))
+
+    assert metadata["config"]["teacher"] == "min_fill"
+    for sample_index in range(4):
+        ops = row_ops_from_shard_arrays(shard, sample_index)
+        final = shard["finals"][sample_index].tolist()
+        replayed = replay_row_ops(shard["inputs"][sample_index].tolist(), ops, 101)
+
+        assert replayed == final
+        assert is_rref_modp(final, 101)
+
+
 @pytest.mark.parametrize(
     "matrix_config",
     [
@@ -162,6 +193,17 @@ def test_sparse_and_low_rank_configs_are_supported(tmp_path: Path, matrix_config
             "  cols: 2\n"
             "teacher: leftmost\n",
             "unsupported matrix family",
+        ),
+        (
+            "task: rref\n"
+            "field:\n"
+            "  modulus: 101\n"
+            "matrix:\n"
+            "  family: dense\n"
+            "  rows: 2\n"
+            "  cols: 2\n"
+            "teacher: diagonal\n",
+            "unsupported teacher for RREF shard: 'diagonal'",
         ),
     ],
 )

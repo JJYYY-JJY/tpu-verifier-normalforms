@@ -4,7 +4,7 @@ import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal, TypeAlias, cast
 
 import numpy as np
 import yaml  # type: ignore[import-untyped]
@@ -18,6 +18,7 @@ from nf_agent.data.matrix_families import (
 from nf_agent.env.elementary_ops import Matrix, require_prime
 from nf_agent.env.rref_modp import RowOp
 from nf_agent.teachers.leftmost import LeftmostRREFTeacher
+from nf_agent.teachers.min_fill import MinFillRREFTeacher
 
 SCHEMA_VERSION = "rref-teacher-trajectory-npz-v0.2"
 PADDING_VALUE = -1
@@ -27,9 +28,11 @@ ShardValue: TypeAlias = np.ndarray[Any, np.dtype[Any]]
 ShardArrays: TypeAlias = dict[str, ShardValue]
 TrainingExample: TypeAlias = dict[str, ShardValue]
 MatrixFamily: TypeAlias = Literal["dense", "sparse", "low_rank"]
+TeacherName: TypeAlias = Literal["leftmost", "min_fill"]
 
 _OP_TO_CODE: Mapping[str, RowOpKindCode] = {"swap": 1, "scale": 2, "add": 3}
 _CODE_TO_OP: Mapping[int, str] = {1: "swap", 2: "scale", 3: "add"}
+_SUPPORTED_TEACHERS: frozenset[TeacherName] = frozenset(("leftmost", "min_fill"))
 _REQUIRED_SHARD_ARRAYS: Mapping[str, np.dtype[Any]] = {
     "inputs": np.dtype(np.int64),
     "finals": np.dtype(np.int64),
@@ -51,7 +54,7 @@ class RREFShardConfig:
     family: MatrixFamily
     rows: int
     cols: int
-    teacher: Literal["leftmost"]
+    teacher: TeacherName
     density: float | None = None
     rank: int | None = None
 
@@ -120,9 +123,10 @@ def load_rref_shard_config(config_path: str | Path) -> RREFShardConfig:
     if task != "rref":
         raise ValueError(f"unsupported task for RREF shard: {task!r}")
 
-    teacher = raw.get("teacher")
-    if teacher != "leftmost":
-        raise ValueError(f"unsupported teacher for RREF shard: {teacher!r}")
+    teacher_raw = raw.get("teacher")
+    if teacher_raw not in _SUPPORTED_TEACHERS:
+        raise ValueError(f"unsupported teacher for RREF shard: {teacher_raw!r}")
+    teacher = cast(TeacherName, teacher_raw)
 
     field = _require_mapping(raw.get("field"), "field")
     modulus = _require_int(field.get("modulus"), "field.modulus")
@@ -155,7 +159,7 @@ def load_rref_shard_config(config_path: str | Path) -> RREFShardConfig:
         family=family,
         rows=rows,
         cols=cols,
-        teacher="leftmost",
+        teacher=teacher,
         density=density,
         rank=rank,
     )
@@ -183,6 +187,14 @@ def _generate_matrix(config: RREFShardConfig, seed: int) -> Matrix:
         config.modulus,
         seed,
     )
+
+
+def _teacher_for_config(config: RREFShardConfig) -> LeftmostRREFTeacher | MinFillRREFTeacher:
+    if config.teacher == "leftmost":
+        return LeftmostRREFTeacher(p=config.modulus)
+    if config.teacher == "min_fill":
+        return MinFillRREFTeacher(p=config.modulus)
+    raise ValueError(f"unsupported teacher for RREF shard: {config.teacher!r}")
 
 
 def _encode_row_op(op: RowOp) -> tuple[RowOpKindCode, int, int, int]:
@@ -225,7 +237,7 @@ def generate_rref_shard(config_path: str | Path, count: int, seed_start: int) ->
     seed_start = _require_int(seed_start, "seed_start")
 
     config = load_rref_shard_config(config_path)
-    teacher = LeftmostRREFTeacher(p=config.modulus)
+    teacher = _teacher_for_config(config)
 
     inputs = np.empty((count, config.rows, config.cols), dtype=np.int64)
     finals = np.empty((count, config.rows, config.cols), dtype=np.int64)
