@@ -26,5 +26,5 @@ HNF coefficient-growth metrics stay exact. The environment records
 initial_max_abs)`, and `step_count`. It does not compute floating-point growth
 ratios in the verifier path.
 
-SNF replay, Lean checker expansion, HNF training, rollout, and benchmark
-reporting remain future slices.
+SNF replay, Lean checker expansion, HNF training, and HNF rollout remain future
+slices.
