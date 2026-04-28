@@ -1,8 +1,8 @@
 # Trajectory Shards
 
 `v0.2` RREF teacher shards are fixed-shape, uncompressed `.npz` files generated
-offline from exact leftmost RREF teacher traces. They are dataset artifacts, not
-verifiers.
+offline from exact deterministic RREF teacher traces. They are dataset
+artifacts, not verifiers.
 
 ## RREF NPZ Schema
 
@@ -37,8 +37,8 @@ Arrays:
 - `2`: row scale
 - `3`: add row multiple
 
-`max_ops = min(rows, cols) * (rows + 1)`. For each pivot, the current teacher can
-emit at most one swap, one scale, and one add for every non-pivot row.
+`max_ops = min(rows, cols) * (rows + 1)`. For each pivot, the supported teachers
+can emit at most one swap, one scale, and one add for every non-pivot row.
 
 `metadata_json` includes the schema version, normalized source config, count,
 seed range, matrix shape, op encoding, and padding value.
@@ -46,7 +46,7 @@ seed range, matrix shape, op encoding, and padding value.
 ## Boundaries
 
 - Supported task: `rref`
-- Supported teacher: `leftmost`
+- Supported teacher: `leftmost`, `min_fill`
 - Supported matrix families: `dense`, `sparse`, `low_rank`
 - Supported field: prime `field.modulus`
 - Shards are produced with `numpy.savez`, not compressed.
