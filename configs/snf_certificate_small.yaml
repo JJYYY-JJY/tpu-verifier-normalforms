@@ -1,0 +1,8 @@
+task: snf_certificate
+integer_matrix:
+  rows: 4
+  cols: 4
+certificate:
+  include_transformations: true
+  check_diagonal_divisibility: true
+

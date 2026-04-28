@@ -1,0 +1,6 @@
+{"version": "1.2.0",
+ "packagesDir": ".lake/packages",
+ "packages": [],
+ "name": "verifier_normal_forms",
+ "lakeDir": ".lake",
+ "fixedToolchain": false}

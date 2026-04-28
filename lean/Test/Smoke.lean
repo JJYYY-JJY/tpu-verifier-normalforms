@@ -1,0 +1,4 @@
+import VerifierNormalForms
+
+#eval VerifierNormalForms.acceptsSmokeCertificate
+

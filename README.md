@@ -1,0 +1,67 @@
+# TPU Verifier Normal Forms
+
+Research monorepo for verifier-guided agents that learn exact matrix normal-form
+procedures while remaining checkable by deterministic algebraic replay.
+
+The first vertical slice is finite-field RREF over `F_101`:
+
+```text
+random F_101 matrix
+-> explicit leftmost teacher trajectory
+-> exact modular row operations
+-> final RREF
+-> trace replay
+-> verifier predicate
+```
+
+## Correctness Model
+
+- All verifier paths are exact integer/modular arithmetic.
+- No floating-point computation is accepted for certificate replay or algebraic
+  predicates.
+- Invalid modulus, malformed matrices, or illegal row operations fail fast.
+- Neural rollout must not silently fall back to deterministic teachers.
+- Deterministic teachers are oracle, baseline, and dataset sources only.
+
+## Install
+
+```bash
+uv python install 3.11
+uv venv --python 3.11 .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -r requirements-dev.txt -e .
+```
+
+Sage is managed outside the Python venv:
+
+```bash
+brew install micromamba
+micromamba create -y -n nf-sage -c conda-forge sage
+```
+
+## Smoke Commands
+
+```bash
+source .venv/bin/activate
+python -m pip check
+ruff check .
+mypy src
+pytest
+nf-agent --help
+cd lean && lake build
+```
+
+## Roadmap
+
+- `v0.2`: fixed-shape NPZ shards, `PivotMLP`, JAX/Flax/Optax imitation
+  training, Orbax checkpoints, Grain pipeline.
+- `v0.3`: verifier-guided neural rollout, legal action masking, invalid-action
+  failure accounting, no hidden fallback.
+- `v0.4`: integer HNF, exact gcd kernel, bitlength/coefficient-growth metrics.
+- `v0.5`: SNF certificates with `(D,U,V)` and trace replay.
+- `v0.6`: Lean checker for small exported RREF/SNF certificates.
+- `v0.7`: benchmark suite and paper-style report.
+- `v0.8`: DAgger, policy gradient, and verifier beam search as explicit
+  experimental branches.
+

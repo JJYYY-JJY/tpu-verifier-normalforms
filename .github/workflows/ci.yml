@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python-and-lean:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install Python dependencies
+        run: |
+          uv python install 3.11
+          uv venv --python 3.11 .venv
+          source .venv/bin/activate
+          python -m pip install -U pip
+          python -m pip install -r requirements-dev.txt -e .
+      - name: Python gates
+        run: |
+          source .venv/bin/activate
+          python -m pip check
+          ruff check .
+          mypy src
+          pytest
+          nf-agent --help
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: lean
+          use-mathlib-cache: false
+      - name: Lean gate
+        run: cd lean && lake build
+

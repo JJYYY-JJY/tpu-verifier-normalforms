@@ -1,0 +1,9 @@
+task: rref
+field:
+  modulus: 1009
+matrix:
+  family: dense
+  rows: 16
+  cols: 16
+teacher: leftmost
+

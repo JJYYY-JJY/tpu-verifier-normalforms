@@ -1,0 +1,10 @@
+task: hnf
+integer_matrix:
+  family: sparse
+  rows: 8
+  cols: 8
+  density: 0.2
+metrics:
+  - coefficient_growth
+  - bitlength
+
