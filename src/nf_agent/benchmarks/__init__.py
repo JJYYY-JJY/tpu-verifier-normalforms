@@ -1,5 +1,11 @@
 """Benchmark harnesses."""
 
+from nf_agent.benchmarks.hnf_benchmark import (
+    HNFBenchmarkConfig,
+    integer_matrix_density,
+    integer_row_op_density_profile,
+    run_hnf_benchmark,
+)
 from nf_agent.benchmarks.rref_benchmark import (
     DensityProfile,
     RREFBenchmarkConfig,
@@ -10,8 +16,12 @@ from nf_agent.benchmarks.rref_benchmark import (
 
 __all__ = [
     "DensityProfile",
+    "HNFBenchmarkConfig",
     "RREFBenchmarkConfig",
+    "integer_matrix_density",
+    "integer_row_op_density_profile",
     "matrix_density_modp",
     "row_op_density_profile",
+    "run_hnf_benchmark",
     "run_rref_benchmark",
 ]
