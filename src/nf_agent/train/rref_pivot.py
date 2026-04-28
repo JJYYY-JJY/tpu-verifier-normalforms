@@ -82,11 +82,7 @@ def _loss_and_metrics(
         batch["pivot_cols"],
         batch["pivot_mask"],
     )
-    op_kind_loss = _masked_integer_ce(
-        outputs["op_kind_logits"],
-        batch["op_kind"],
-        batch["op_mask"],
-    )
+    op_kind_loss = jnp.mean(_integer_ce(outputs["op_kind_logits"], batch["op_kind"]))
     op_target_loss = _masked_integer_ce(
         outputs["op_target_logits"],
         batch["op_target"],

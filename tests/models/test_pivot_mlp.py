@@ -33,11 +33,12 @@ def test_pivot_mlp_outputs_all_training_heads_with_expected_shapes(tmp_path: Pat
     assert outputs["op_scalar_logits"].shape == (2, 72, 101)
 
 
-def test_rref_pivot_loss_is_finite_and_ignores_padded_labels(tmp_path: Path) -> None:
+def test_rref_pivot_loss_is_finite_and_trains_op_kind_padding_labels(tmp_path: Path) -> None:
     batch = _batch(tmp_path)
     batch["pivot_mask"][:] = False
     batch["pivot_cols"][:] = -999
     batch["op_mask"][:] = False
+    batch["op_kind"][:] = 0
     batch["op_target"][:] = -999
     batch["op_source"][:] = -999
     batch["op_scalar"][:] = -999
@@ -51,7 +52,8 @@ def test_rref_pivot_loss_is_finite_and_ignores_padded_labels(tmp_path: Path) -> 
     assert np.isfinite(metrics["loss"])
     assert np.isfinite(metrics["pivot_active_loss"])
     assert metrics["pivot_col_loss"] == 0.0
-    assert metrics["op_kind_loss"] == 0.0
+    assert np.isfinite(metrics["op_kind_loss"])
+    assert metrics["op_kind_loss"] > 0.0
     assert metrics["op_target_loss"] == 0.0
     assert metrics["op_source_loss"] == 0.0
     assert metrics["op_scalar_loss"] == 0.0
