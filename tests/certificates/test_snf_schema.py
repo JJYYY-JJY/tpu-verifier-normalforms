@@ -8,8 +8,11 @@ from nf_agent.certificates import (
     SNF_CERTIFICATE_SCHEMA_VERSION,
     IntegerMatrixOp,
     SNFCertificate,
+    replay_snf_certificate,
     snf_certificate_json_schema,
     validate_snf_certificate_record,
+    verify_snf_certificate,
+    verify_snf_certificate_record,
 )
 
 
@@ -20,15 +23,14 @@ def _valid_payload() -> dict[str, object]:
         "shape": [2, 2],
         "input": [[2, 4], [6, 8]],
         "diagonal": [[2, 0], [0, 4]],
-        "left_transform": [[1, 0], [0, 1]],
-        "right_transform": [[1, 0], [0, 1]],
+        "left_transform": [[1, 0], [3, -1]],
+        "right_transform": [[1, -2], [0, 1]],
         "row_ops": [
-            {"kind": "swap", "target": 0, "source": 1},
-            {"kind": "negate", "target": 1},
             {"kind": "add", "target": 1, "source": 0, "scalar": -3},
+            {"kind": "negate", "target": 1},
         ],
         "col_ops": [
-            {"kind": "add", "target": 0, "source": 1, "scalar": 2},
+            {"kind": "add", "target": 1, "source": 0, "scalar": -2},
         ],
     }
 
@@ -45,15 +47,85 @@ def test_valid_snf_certificate_parses_to_normalized_dataclasses() -> None:
         shape=(2, 2),
         input=[[2, 4], [6, 8]],
         diagonal=[[2, 0], [0, 4]],
-        left_transform=[[1, 0], [0, 1]],
-        right_transform=[[1, 0], [0, 1]],
+        left_transform=[[1, 0], [3, -1]],
+        right_transform=[[1, -2], [0, 1]],
         row_ops=[
-            IntegerMatrixOp(kind="swap", target=0, source=1),
-            IntegerMatrixOp(kind="negate", target=1),
             IntegerMatrixOp(kind="add", target=1, source=0, scalar=-3),
+            IntegerMatrixOp(kind="negate", target=1),
         ],
-        col_ops=[IntegerMatrixOp(kind="add", target=0, source=1, scalar=2)],
+        col_ops=[IntegerMatrixOp(kind="add", target=1, source=0, scalar=-2)],
     )
+
+
+def test_verify_snf_certificate_record_accepts_replay_transforms_and_equation() -> None:
+    certificate = verify_snf_certificate_record(_valid_payload())
+
+    assert verify_snf_certificate(certificate) is None
+    assert certificate == validate_snf_certificate_record(_valid_payload())
+
+
+def test_replay_snf_certificate_returns_declared_diagonal() -> None:
+    certificate = validate_snf_certificate_record(_valid_payload())
+
+    assert replay_snf_certificate(certificate) == [[2, 0], [0, 4]]
+
+
+def test_verify_snf_certificate_record_rejects_replay_final_mismatch() -> None:
+    payload = _valid_payload()
+    payload["diagonal"] = [[2, 0], [0, 8]]
+
+    with pytest.raises(ValueError, match="replay final mismatch"):
+        verify_snf_certificate_record(payload)
+
+
+def test_verify_snf_certificate_record_rejects_left_transform_mismatch() -> None:
+    payload = _valid_payload()
+    payload["left_transform"] = [[1, 0], [2, -1]]
+
+    with pytest.raises(ValueError, match="left transform mismatch"):
+        verify_snf_certificate_record(payload)
+
+
+def test_verify_snf_certificate_record_rejects_right_transform_mismatch() -> None:
+    payload = _valid_payload()
+    payload["right_transform"] = [[1, -1], [0, 1]]
+
+    with pytest.raises(ValueError, match="right transform mismatch"):
+        verify_snf_certificate_record(payload)
+
+
+def test_verify_snf_certificate_rejects_matrix_equation_mismatch() -> None:
+    payload = _valid_payload()
+    payload["left_transform"] = [[1, 0], [2, -1]]
+
+    with pytest.raises(ValueError, match="matrix equation mismatch"):
+        verify_snf_certificate_record(payload)
+
+
+def test_replay_snf_certificate_does_not_mutate_certificate_matrices() -> None:
+    certificate = validate_snf_certificate_record(_valid_payload())
+    before = deepcopy(certificate)
+
+    assert replay_snf_certificate(certificate) == [[2, 0], [0, 4]]
+    assert certificate == before
+
+
+def test_verify_snf_certificate_record_replays_column_ops_on_zero_row_matrix() -> None:
+    payload: dict[str, object] = {
+        "kind": SNF_CERTIFICATE_KIND,
+        "schema_version": SNF_CERTIFICATE_SCHEMA_VERSION,
+        "shape": [0, 2],
+        "input": [],
+        "diagonal": [],
+        "left_transform": [],
+        "right_transform": [[1, -1], [0, 1]],
+        "row_ops": [],
+        "col_ops": [{"kind": "add", "target": 1, "source": 0, "scalar": -1}],
+    }
+
+    certificate = verify_snf_certificate_record(payload)
+
+    assert replay_snf_certificate(certificate) == []
 
 
 def test_snf_certificate_json_schema_exposes_contract() -> None:
