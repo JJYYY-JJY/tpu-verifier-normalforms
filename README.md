@@ -61,6 +61,11 @@ nf-agent train rref-pivot \
   --learning-rate 0.001 \
   --seed 0 \
   --out /tmp/rref_pivot_smoke_ckpt
+nf-agent rollout rref-neural \
+  --data /tmp/rref_8x8_smoke.npz \
+  --checkpoint /tmp/rref_pivot_smoke_ckpt \
+  --sample-index 0 \
+  --max-steps 8
 cd lean && lake build
 ```
 
@@ -83,6 +88,12 @@ Check the latest local training checkpoint:
 ```bash
 ls /tmp/rref_pivot_smoke_ckpt
 ```
+
+The neural rollout command emits JSON with `status`, `success`,
+`invalid_action_count`, `masked_action_count`, `invalid_action_breakdown`,
+`initial_matrix`, `final_matrix`, replayed `ops`, `final_is_rref`,
+`checkpoint_step`, and `modulus`. It reports failed neural rollouts directly;
+it does not call the leftmost teacher as fallback.
 
 ## Roadmap
 
