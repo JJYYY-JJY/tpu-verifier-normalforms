@@ -66,6 +66,20 @@ nf-agent rollout rref-neural \
   --checkpoint /tmp/rref_pivot_smoke_ckpt \
   --sample-index 0 \
   --max-steps 8
+nf-agent benchmark rref \
+  --source generated \
+  --rows 4 \
+  --cols 4 \
+  --p 101 \
+  --family dense \
+  --count 4 \
+  --seed-start 0
+nf-agent benchmark rref \
+  --source shard \
+  --data /tmp/rref_8x8_smoke.npz \
+  --count 4 \
+  --checkpoint /tmp/rref_pivot_smoke_ckpt \
+  --max-steps 8
 cd lean && lake build
 ```
 
@@ -89,11 +103,20 @@ Check the latest local training checkpoint:
 ls /tmp/rref_pivot_smoke_ckpt
 ```
 
-The neural rollout command emits JSON with `status`, `success`,
+The neural rollout command emits JSON with `status`, `success`, `step_count`,
 `invalid_action_count`, `masked_action_count`, `invalid_action_breakdown`,
 `initial_matrix`, `final_matrix`, replayed `ops`, `final_is_rref`,
 `checkpoint_step`, and `modulus`. It reports failed neural rollouts directly;
 it does not call the leftmost teacher as fallback.
+
+The RREF benchmark command emits compact JSON with top-level `status`, `source`,
+`count`, `rows`, `cols`, `modulus`, and `policies`. The `leftmost` policy always
+runs with exact replay and `is_rref_modp`; `neural` is included only when
+`--checkpoint` is provided. Per-sample benchmark summaries include trace or step
+counts, rank where applicable, replay/RREF checks, fill-in density
+(`initial_density`, `final_density`, `max_density`, `fill_in_delta`), invalid
+action counts for neural rollout, and wall-clock timings. Matrices and full row
+operation traces are omitted from benchmark samples.
 
 ## Roadmap
 
@@ -101,9 +124,11 @@ it does not call the leftmost teacher as fallback.
   training, Orbax checkpoints, Grain pipeline.
 - `v0.3`: verifier-guided neural rollout, legal action masking, invalid-action
   failure accounting, no hidden fallback.
+- `v0.3+`: RREF benchmark suite for generated/shard samples, exact replay
+  checks, and fill-in density metrics.
 - `v0.4`: integer HNF, exact gcd kernel, bitlength/coefficient-growth metrics.
 - `v0.5`: SNF certificates with `(D,U,V)` and trace replay.
 - `v0.6`: Lean checker for small exported RREF/SNF certificates.
-- `v0.7`: benchmark suite and paper-style report.
+- `v0.7`: paper-style benchmark report.
 - `v0.8`: DAgger, policy gradient, and verifier beam search as explicit
   experimental branches.
