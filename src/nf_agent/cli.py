@@ -4,6 +4,7 @@ from typing import Any
 import click
 
 from nf_agent.data.matrix_families import dense_random_matrix, sparse_random_matrix
+from nf_agent.data.rref_shards import write_rref_shard
 from nf_agent.env.rref_modp import RowOp, rref_leftmost
 
 
@@ -44,6 +45,29 @@ def data_sample(rows: int, cols: int, modulus: int, seed: int, density: float | 
         matrix = sparse_random_matrix(rows=rows, cols=cols, p=modulus, density=density, seed=seed)
         family = "sparse"
     _emit_json({"family": family, "modulus": modulus, "matrix": matrix})
+
+
+@data.command("make-rref-shard")
+@click.option(
+    "--config",
+    "config_path",
+    type=click.Path(exists=True, dir_okay=False),
+    required=True,
+)
+@click.option("--count", type=int, required=True)
+@click.option("--seed-start", type=int, default=0, show_default=True)
+@click.option("--out", "out_path", type=click.Path(dir_okay=False), required=True)
+def make_rref_shard(config_path: str, count: int, seed_start: int, out_path: str) -> None:
+    try:
+        write_rref_shard(
+            config_path=config_path,
+            count=count,
+            seed_start=seed_start,
+            out_path=out_path,
+        )
+    except (TypeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json({"status": "ok", "out": out_path, "count": count, "seed_start": seed_start})
 
 
 @main.group()
