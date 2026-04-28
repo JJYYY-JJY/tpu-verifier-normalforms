@@ -54,6 +54,13 @@ nf-agent data make-rref-shard \
   --count 4 \
   --seed-start 0 \
   --out /tmp/rref_8x8_smoke.npz
+nf-agent train rref-pivot \
+  --data /tmp/rref_8x8_smoke.npz \
+  --steps 2 \
+  --batch-size 4 \
+  --learning-rate 0.001 \
+  --seed 0 \
+  --out /tmp/rref_pivot_smoke_ckpt
 cd lean && lake build
 ```
 
@@ -70,6 +77,12 @@ PY
 ```
 
 See `docs/trajectory_shards.md` for the fixed NPZ schema.
+
+Check the latest local training checkpoint:
+
+```bash
+ls /tmp/rref_pivot_smoke_ckpt
+```
 
 ## Roadmap
 
