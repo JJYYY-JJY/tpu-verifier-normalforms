@@ -49,8 +49,27 @@ ruff check .
 mypy src
 pytest
 nf-agent --help
+nf-agent data make-rref-shard \
+  --config configs/rref_8x8_mod101.yaml \
+  --count 4 \
+  --seed-start 0 \
+  --out /tmp/rref_8x8_smoke.npz
 cd lean && lake build
 ```
+
+Inspect shard metadata:
+
+```bash
+python - <<'PY'
+import json
+import numpy as np
+
+with np.load("/tmp/rref_8x8_smoke.npz", allow_pickle=False) as shard:
+    print(json.dumps(json.loads(str(shard["metadata_json"])), indent=2))
+PY
+```
+
+See `docs/trajectory_shards.md` for the fixed NPZ schema.
 
 ## Roadmap
 
