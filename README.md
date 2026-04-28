@@ -84,6 +84,13 @@ nf-agent benchmark rref \
   --family dense \
   --count 4 \
   --seed-start 0
+nf-agent benchmark hnf \
+  --rows 4 \
+  --cols 4 \
+  --count 4 \
+  --density 0.2 \
+  --entry-bound 9 \
+  --seed-start 0
 nf-agent benchmark rref \
   --source shard \
   --data /tmp/rref_8x8_smoke.npz \
@@ -129,6 +136,13 @@ counts, rank where applicable, replay/RREF checks, fill-in density
 action counts for neural rollout, and wall-clock timings. Matrices and full row
 operation traces are omitted from benchmark samples.
 
+The HNF benchmark command emits compact JSON for generated sparse integer
+matrices with top-level `status`, `source`, `family`, `count`, `rows`, `cols`,
+`density`, `entry_bound`, `aggregate`, and `samples`. Each sample runs
+`row_hnf`, exact trace replay, and `is_row_hnf`. Per-sample summaries include
+trace length, replay/HNF checks, density metrics, wall-clock timings, and exact
+coefficient-growth metrics. Matrices and row-operation traces are omitted.
+
 Integer HNF uses a row-style convention: nonzero rows precede zero rows, pivot
 columns strictly increase, pivots are positive, entries below pivots are zero,
 and entries above each pivot lie in `[0, pivot)`. Its replay path supports only
@@ -145,10 +159,11 @@ integers: `initial_max_abs`, `max_abs_seen`, `initial_bitlength`,
   failure accounting, no hidden fallback.
 - `v0.3+`: RREF benchmark suite for generated/shard samples, exact replay
   checks, and fill-in density metrics.
-- `v0.4`: HNF training/benchmark integration on top of the integer row-HNF
-  environment.
+- `v0.4`: HNF benchmark suite for generated sparse integer matrices, exact
+  replay checks, HNF predicates, density metrics, and exact coefficient-growth
+  reporting.
 - `v0.5`: SNF certificates with `(D,U,V)` and trace replay.
 - `v0.6`: Lean checker for small exported RREF/SNF certificates.
 - `v0.7`: paper-style benchmark report.
-- `v0.8`: DAgger, policy gradient, and verifier beam search as explicit
-  experimental branches.
+- `v0.8`: HNF training/rollout, DAgger, policy gradient, and verifier beam
+  search as explicit experimental branches.
