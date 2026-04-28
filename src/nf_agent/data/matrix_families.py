@@ -33,6 +33,36 @@ def sparse_random_matrix(rows: int, cols: int, p: int, density: float, seed: int
     return matrix
 
 
+def sparse_integer_matrix(
+    rows: int,
+    cols: int,
+    density: float,
+    seed: int,
+    entry_bound: int = 9,
+) -> Matrix:
+    _require_shape(rows, cols)
+    if not 0.0 <= density <= 1.0:
+        raise ValueError("density must lie in [0, 1]")
+    if not isinstance(entry_bound, int) or isinstance(entry_bound, bool):
+        raise ValueError("entry_bound must be a positive integer")
+    if entry_bound <= 0:
+        raise ValueError("entry_bound must be positive")
+
+    rng = Random(seed)
+    matrix: Matrix = []
+    for _ in range(rows):
+        row = []
+        for _ in range(cols):
+            if rng.random() < density:
+                magnitude = rng.randint(1, entry_bound)
+                sign = -1 if rng.randrange(2) == 0 else 1
+                row.append(sign * magnitude)
+            else:
+                row.append(0)
+        matrix.append(row)
+    return matrix
+
+
 def low_rank_random_matrix(rows: int, cols: int, rank: int, p: int, seed: int) -> Matrix:
     require_prime(p)
     _require_shape(rows, cols)
@@ -45,4 +75,3 @@ def low_rank_random_matrix(rows: int, cols: int, rank: int, p: int, seed: int) -
         [sum(left[row][k] * right[k][col] for k in range(rank)) % p for col in range(cols)]
         for row in range(rows)
     ]
-
