@@ -127,4 +127,3 @@ def report() -> None:
 @report.command("status")
 def report_status() -> None:
     _emit_json({"status": "not_implemented", "reason": "v0.7 roadmap"})
-

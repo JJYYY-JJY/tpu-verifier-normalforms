@@ -83,4 +83,3 @@ See `docs/trajectory_shards.md` for the fixed NPZ schema.
 - `v0.7`: benchmark suite and paper-style report.
 - `v0.8`: DAgger, policy gradient, and verifier beam search as explicit
   experimental branches.
-
