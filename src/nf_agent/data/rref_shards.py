@@ -8,6 +8,7 @@ from typing import Any, Literal, TypeAlias
 
 import numpy as np
 import yaml  # type: ignore[import-untyped]
+from grain import MapDataset  # type: ignore[import-untyped]
 
 from nf_agent.data.matrix_families import (
     dense_random_matrix,
@@ -24,10 +25,23 @@ PADDING_VALUE = -1
 RowOpKindCode: TypeAlias = Literal[0, 1, 2, 3]
 ShardValue: TypeAlias = np.ndarray[Any, np.dtype[Any]]
 ShardArrays: TypeAlias = dict[str, ShardValue]
+TrainingExample: TypeAlias = dict[str, ShardValue]
 MatrixFamily: TypeAlias = Literal["dense", "sparse", "low_rank"]
 
 _OP_TO_CODE: Mapping[str, RowOpKindCode] = {"swap": 1, "scale": 2, "add": 3}
 _CODE_TO_OP: Mapping[int, str] = {1: "swap", 2: "scale", 3: "add"}
+_REQUIRED_SHARD_ARRAYS: Mapping[str, np.dtype[Any]] = {
+    "inputs": np.dtype(np.int64),
+    "finals": np.dtype(np.int64),
+    "pivot_rows": np.dtype(np.int64),
+    "pivot_cols": np.dtype(np.int64),
+    "pivot_mask": np.dtype(np.bool_),
+    "op_kind": np.dtype(np.int8),
+    "op_target": np.dtype(np.int64),
+    "op_source": np.dtype(np.int64),
+    "op_scalar": np.dtype(np.int64),
+    "op_mask": np.dtype(np.bool_),
+}
 
 
 @dataclass(frozen=True)
@@ -276,6 +290,207 @@ def write_rref_shard(
     shard = generate_rref_shard(config_path=config_path, count=count, seed_start=seed_start)
     path.parent.mkdir(parents=True, exist_ok=True)
     np.savez(path, **shard)  # type: ignore[arg-type]
+
+
+def _metadata_from_array(value: ShardValue) -> dict[str, Any]:
+    if value.shape != ():
+        raise ValueError("metadata_json must be a scalar JSON string")
+    raw = value.item()
+    if not isinstance(raw, str):
+        raw = str(raw)
+    loaded = json.loads(raw)
+    if not isinstance(loaded, dict):
+        raise ValueError("metadata_json must decode to a JSON object")
+    return loaded
+
+
+def _require_shape(array: ShardValue, name: str, expected: tuple[int, ...]) -> None:
+    if array.shape != expected:
+        raise ValueError(f"{name} must have shape {expected}, got {array.shape}")
+
+
+def _validate_pivot_arrays(arrays: Mapping[str, ShardValue], rows: int, cols: int) -> None:
+    pivot_mask = arrays["pivot_mask"]
+    pivot_rows = arrays["pivot_rows"]
+    pivot_cols = arrays["pivot_cols"]
+
+    inactive = np.logical_not(pivot_mask)
+    if not np.all(pivot_rows[inactive] == PADDING_VALUE):
+        raise ValueError("pivot_rows padding must be -1 where pivot_mask is false")
+    if not np.all(pivot_cols[inactive] == PADDING_VALUE):
+        raise ValueError("pivot_cols padding must be -1 where pivot_mask is false")
+
+    if np.any(pivot_rows[pivot_mask] < 0) or np.any(pivot_rows[pivot_mask] >= rows):
+        raise ValueError("active pivot_rows entries must be valid row indices")
+    if np.any(pivot_cols[pivot_mask] < 0) or np.any(pivot_cols[pivot_mask] >= cols):
+        raise ValueError("active pivot_cols entries must be valid column indices")
+
+
+def _validate_op_arrays(arrays: Mapping[str, ShardValue], rows: int) -> None:
+    op_mask = arrays["op_mask"]
+    op_kind = arrays["op_kind"]
+    op_target = arrays["op_target"]
+    op_source = arrays["op_source"]
+    op_scalar = arrays["op_scalar"]
+
+    inactive = np.logical_not(op_mask)
+    if not np.all(op_kind[inactive] == 0):
+        raise ValueError("op_kind padding must be 0 where op_mask is false")
+    for name, array in (
+        ("op_target", op_target),
+        ("op_source", op_source),
+        ("op_scalar", op_scalar),
+    ):
+        if not np.all(array[inactive] == PADDING_VALUE):
+            raise ValueError(f"{name} padding must be -1 where op_mask is false")
+
+    active_kinds = op_kind[op_mask]
+    if np.any((active_kinds < 1) | (active_kinds > 3)):
+        raise ValueError("active op_kind entries must be one of 1, 2, or 3")
+    if np.any(op_target[op_mask] < 0) or np.any(op_target[op_mask] >= rows):
+        raise ValueError("active op_target entries must be valid row indices")
+
+    source_mask = op_mask & np.isin(op_kind, [1, 3])
+    if np.any(op_source[source_mask] < 0) or np.any(op_source[source_mask] >= rows):
+        raise ValueError("active swap/add op_source entries must be valid row indices")
+    if not np.all(op_source[op_mask & (op_kind == 2)] == PADDING_VALUE):
+        raise ValueError("scale op_source entries must be -1")
+
+    if not np.all(op_scalar[op_mask & (op_kind == 1)] == PADDING_VALUE):
+        raise ValueError("swap op_scalar entries must be -1")
+
+
+def _load_validated_rref_shard(path: str | Path) -> tuple[ShardArrays, dict[str, Any]]:
+    shard_path = Path(path)
+    if shard_path.suffix != ".npz":
+        raise ValueError("data path must end with .npz")
+    if not shard_path.exists():
+        raise ValueError(f"data path does not exist: {shard_path}")
+
+    with np.load(shard_path, allow_pickle=False) as shard:
+        missing = sorted(
+            key
+            for key in [*_REQUIRED_SHARD_ARRAYS.keys(), "metadata_json"]
+            if key not in shard.files
+        )
+        if missing:
+            raise ValueError(f"missing required array(s): {', '.join(missing)}")
+        arrays = {key: np.asarray(shard[key]) for key in _REQUIRED_SHARD_ARRAYS}
+        metadata_json = np.asarray(shard["metadata_json"])
+
+    metadata = _metadata_from_array(metadata_json)
+    schema_version = metadata.get("schema_version")
+    if schema_version != SCHEMA_VERSION:
+        raise ValueError(f"unsupported RREF shard schema_version: {schema_version!r}")
+
+    shape = _require_mapping(metadata.get("shape"), "metadata.shape")
+    rows = _require_positive_int(shape.get("rows"), "metadata.shape.rows")
+    cols = _require_positive_int(shape.get("cols"), "metadata.shape.cols")
+    count = _require_positive_int(metadata.get("count"), "metadata.count")
+    max_pivots = _require_positive_int(metadata.get("max_pivots"), "metadata.max_pivots")
+    max_ops = _require_positive_int(metadata.get("max_ops"), "metadata.max_ops")
+    if metadata.get("padding_value") != PADDING_VALUE:
+        raise ValueError("metadata.padding_value must be -1")
+
+    config = _require_mapping(metadata.get("config"), "metadata.config")
+    field = _require_mapping(config.get("field"), "metadata.config.field")
+    modulus = _require_int(field.get("modulus"), "metadata.config.field.modulus")
+    require_prime(modulus)
+
+    for key, expected_dtype in _REQUIRED_SHARD_ARRAYS.items():
+        if arrays[key].dtype != expected_dtype:
+            raise ValueError(f"{key} must have dtype {expected_dtype}, got {arrays[key].dtype}")
+
+    _require_shape(arrays["inputs"], "inputs", (count, rows, cols))
+    _require_shape(arrays["finals"], "finals", (count, rows, cols))
+    for key in ("pivot_rows", "pivot_cols", "pivot_mask"):
+        _require_shape(arrays[key], key, (count, max_pivots))
+    for key in ("op_kind", "op_target", "op_source", "op_scalar", "op_mask"):
+        _require_shape(arrays[key], key, (count, max_ops))
+
+    _validate_pivot_arrays(arrays, rows, cols)
+    _validate_op_arrays(arrays, rows)
+    return arrays, metadata
+
+
+class RREFShardSamples:
+    """Random-access training examples backed by a validated RREF trajectory shard."""
+
+    def __init__(self, path: str | Path) -> None:
+        self._arrays, self._metadata = _load_validated_rref_shard(path)
+        shape = _require_mapping(self._metadata["shape"], "metadata.shape")
+        config = _require_mapping(self._metadata["config"], "metadata.config")
+        field = _require_mapping(config["field"], "metadata.config.field")
+        self.rows = _require_positive_int(shape["rows"], "metadata.shape.rows")
+        self.cols = _require_positive_int(shape["cols"], "metadata.shape.cols")
+        self.max_pivots = _require_positive_int(
+            self._metadata["max_pivots"],
+            "metadata.max_pivots",
+        )
+        self.max_ops = _require_positive_int(self._metadata["max_ops"], "metadata.max_ops")
+        self.modulus = _require_int(field["modulus"], "metadata.config.field.modulus")
+
+    @property
+    def metadata(self) -> dict[str, Any]:
+        return self._metadata
+
+    def __len__(self) -> int:
+        return int(self._arrays["inputs"].shape[0])
+
+    def __getitem__(self, index: int) -> TrainingExample:
+        if index < 0:
+            index += len(self)
+        if index < 0 or index >= len(self):
+            raise IndexError(index)
+
+        inputs = (self._arrays["inputs"][index] % self.modulus).astype(np.float32)
+        inputs /= float(self.modulus - 1)
+
+        pivot_mask = self._arrays["pivot_mask"][index].astype(np.bool_)
+        op_mask = self._arrays["op_mask"][index].astype(np.bool_)
+        op_kind = self._arrays["op_kind"][index].astype(np.int32)
+        op_source_mask = op_mask & np.isin(op_kind, [1, 3])
+        op_scalar_mask = op_mask & np.isin(op_kind, [2, 3])
+
+        return {
+            "inputs": inputs,
+            "pivot_active": pivot_mask.astype(np.float32),
+            "pivot_cols": np.where(pivot_mask, self._arrays["pivot_cols"][index], 0).astype(
+                np.int32
+            ),
+            "pivot_mask": pivot_mask,
+            "op_kind": np.where(op_mask, op_kind, 0).astype(np.int32),
+            "op_target": np.where(op_mask, self._arrays["op_target"][index], 0).astype(
+                np.int32
+            ),
+            "op_source": np.where(op_source_mask, self._arrays["op_source"][index], 0).astype(
+                np.int32
+            ),
+            "op_scalar": np.where(
+                op_scalar_mask,
+                self._arrays["op_scalar"][index] % self.modulus,
+                0,
+            ).astype(np.int32),
+            "op_mask": op_mask,
+            "op_source_mask": op_source_mask,
+            "op_scalar_mask": op_scalar_mask,
+        }
+
+
+def make_rref_grain_dataset(
+    path: str | Path,
+    batch_size: int,
+    seed: int,
+    *,
+    drop_remainder: bool = False,
+) -> MapDataset:
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+    samples = RREFShardSamples(path)
+    return MapDataset.source(samples).shuffle(seed).batch(
+        batch_size,
+        drop_remainder=drop_remainder,
+    )
 
 
 def row_ops_from_shard_arrays(shard: Mapping[str, Any], sample_index: int) -> list[RowOp]:
