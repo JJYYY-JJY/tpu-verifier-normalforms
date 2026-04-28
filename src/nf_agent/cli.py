@@ -6,6 +6,7 @@ import click
 from nf_agent.data.matrix_families import dense_random_matrix, sparse_random_matrix
 from nf_agent.data.rref_shards import write_rref_shard
 from nf_agent.env.rref_modp import RowOp, rref_leftmost
+from nf_agent.train import TrainConfig, train_rref_pivot
 
 
 def _row_op_to_dict(op: RowOp) -> dict[str, int | str]:
@@ -78,6 +79,46 @@ def train() -> None:
 @train.command("status")
 def train_status() -> None:
     _emit_json({"status": "not_implemented", "reason": "v0.2 roadmap"})
+
+
+@train.command("rref-pivot")
+@click.option("--data", "data_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--steps", type=int, required=True)
+@click.option("--batch-size", type=int, required=True)
+@click.option("--learning-rate", type=float, default=0.001, show_default=True)
+@click.option("--seed", type=int, default=0, show_default=True)
+@click.option("--out", "out_dir", type=click.Path(file_okay=False), required=True)
+@click.option(
+    "--hidden-size",
+    "hidden_sizes",
+    type=int,
+    multiple=True,
+    help="Hidden layer width. Repeat for multiple layers; default is 256,256.",
+)
+def train_rref_pivot_cli(
+    data_path: str,
+    steps: int,
+    batch_size: int,
+    learning_rate: float,
+    seed: int,
+    out_dir: str,
+    hidden_sizes: tuple[int, ...],
+) -> None:
+    try:
+        result = train_rref_pivot(
+            TrainConfig(
+                data_path=data_path,
+                steps=steps,
+                batch_size=batch_size,
+                learning_rate=learning_rate,
+                seed=seed,
+                out_dir=out_dir,
+                hidden_sizes=hidden_sizes or (256, 256),
+            )
+        )
+    except (TypeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(result)
 
 
 @main.group()
