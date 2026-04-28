@@ -4,7 +4,7 @@
 - [done] [env] Add RREF predicate and oracle equivalence tests
 - [done] [data] Implement matrix family generator for dense/sparse/low-rank matrices
 - [done] [teacher] Implement leftmost pivot teacher
-- [todo] [teacher] Implement min-fill pivot teacher
+- [done] [teacher] Implement min-fill pivot teacher
 - [done] [data] Serialize teacher trajectories into fixed-shape NPZ shards
 - [done] [model] Implement masked PivotMLP policy in Flax
 - [done] [train] Add JAX/Optax imitation learning loop

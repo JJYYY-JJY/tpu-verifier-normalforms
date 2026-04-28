@@ -7,7 +7,7 @@ The first vertical slice is finite-field RREF over `F_101`:
 
 ```text
 random F_101 matrix
--> explicit leftmost teacher trajectory
+-> explicit deterministic teacher trajectory
 -> exact modular row operations
 -> final RREF
 -> trace replay
@@ -95,7 +95,8 @@ with np.load("/tmp/rref_8x8_smoke.npz", allow_pickle=False) as shard:
 PY
 ```
 
-See `docs/trajectory_shards.md` for the fixed NPZ schema.
+See `docs/trajectory_shards.md` for the fixed NPZ schema and supported shard
+teachers (`leftmost`, `min_fill`).
 
 Check the latest local training checkpoint:
 
