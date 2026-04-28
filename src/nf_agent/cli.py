@@ -6,6 +6,7 @@ import click
 from nf_agent.data.matrix_families import dense_random_matrix, sparse_random_matrix
 from nf_agent.data.rref_shards import write_rref_shard
 from nf_agent.env.rref_modp import RowOp, rref_leftmost
+from nf_agent.rollout import RREFPivotRolloutConfig, rollout_rref_pivot_sample
 from nf_agent.train import TrainConfig, train_rref_pivot
 
 
@@ -146,6 +147,40 @@ def rollout_rref(rows: int, cols: int, modulus: int, seed: int, teacher: str) ->
             "pivots": [{"row": pivot.row, "col": pivot.col} for pivot in result.pivots],
         }
     )
+
+
+@rollout.command("rref-neural")
+@click.option("--data", "data_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--checkpoint", "checkpoint_dir", type=click.Path(file_okay=False), required=True)
+@click.option("--sample-index", type=int, required=True)
+@click.option("--max-steps", type=int, default=None)
+@click.option(
+    "--hidden-size",
+    "hidden_sizes",
+    type=int,
+    multiple=True,
+    help="Hidden layer width. Repeat for multiple layers; default is 256,256.",
+)
+def rollout_rref_neural(
+    data_path: str,
+    checkpoint_dir: str,
+    sample_index: int,
+    max_steps: int | None,
+    hidden_sizes: tuple[int, ...],
+) -> None:
+    try:
+        result = rollout_rref_pivot_sample(
+            RREFPivotRolloutConfig(
+                data_path=data_path,
+                checkpoint_dir=checkpoint_dir,
+                max_steps=max_steps,
+                hidden_sizes=hidden_sizes or (256, 256),
+                sample_index=sample_index,
+            )
+        )
+    except (TypeError, ValueError, IndexError, ZeroDivisionError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(result.as_json_dict())
 
 
 @main.group()
