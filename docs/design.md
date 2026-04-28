@@ -11,6 +11,20 @@
 7. Certificates: portable traces replayable by Python and future Lean checkers.
 
 The first implemented environment is RREF over `F_p`, with `F_101` as the smoke
-configuration. Integer HNF/SNF are later environments, not mixed into the initial
-finite-field slice.
+configuration.
 
+Integer row-HNF is a separate exact environment. Its convention is row-style:
+zero rows are below nonzero rows, pivot columns strictly increase, pivot entries
+are positive, entries below each pivot are zero, and entries above a pivot are
+reduced into `[0, pivot)`. The environment exposes only unimodular integer row
+operations: row swaps, row negation, and integer multiples of one distinct row
+added to another.
+
+HNF coefficient-growth metrics stay exact. The environment records
+`initial_max_abs`, `max_abs_seen`, their integer bitlengths, exact
+`growth_numerator = max_abs_seen`, `growth_denominator = max(1,
+initial_max_abs)`, and `step_count`. It does not compute floating-point growth
+ratios in the verifier path.
+
+SNF certificate schema, Lean checker expansion, HNF training, rollout, and
+benchmark reporting remain future slices.

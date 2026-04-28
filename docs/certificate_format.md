@@ -25,3 +25,6 @@ Checker obligations:
 - Compare replay output to `final`.
 - Verify the final matrix is in RREF modulo `p`.
 
+Integer row-HNF currently has an environment-level trace and replay API, but no
+portable JSON certificate schema. SNF certificates and Lean checker expansion
+remain separate future slices.

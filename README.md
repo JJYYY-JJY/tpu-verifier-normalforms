@@ -14,6 +14,16 @@ random F_101 matrix
 -> verifier predicate
 ```
 
+The integer row-HNF environment is now available as a verifier-first prototype:
+
+```text
+integer matrix
+-> exact unimodular row-operation trace
+-> row-style HNF
+-> trace replay
+-> exact coefficient-growth metrics
+```
+
 ## Correctness Model
 
 - All verifier paths are exact integer/modular arithmetic.
@@ -119,6 +129,14 @@ counts, rank where applicable, replay/RREF checks, fill-in density
 action counts for neural rollout, and wall-clock timings. Matrices and full row
 operation traces are omitted from benchmark samples.
 
+Integer HNF uses a row-style convention: nonzero rows precede zero rows, pivot
+columns strictly increase, pivots are positive, entries below pivots are zero,
+and entries above each pivot lie in `[0, pivot)`. Its replay path supports only
+unimodular integer row operations: `swap`, `negate`, and `add(target, source,
+scalar)` with distinct target/source rows. Coefficient-growth metrics are exact
+integers: `initial_max_abs`, `max_abs_seen`, `initial_bitlength`,
+`max_bitlength`, `growth_numerator`, `growth_denominator`, and `step_count`.
+
 ## Roadmap
 
 - `v0.2`: fixed-shape NPZ shards, `PivotMLP`, JAX/Flax/Optax imitation
@@ -127,7 +145,8 @@ operation traces are omitted from benchmark samples.
   failure accounting, no hidden fallback.
 - `v0.3+`: RREF benchmark suite for generated/shard samples, exact replay
   checks, and fill-in density metrics.
-- `v0.4`: integer HNF, exact gcd kernel, bitlength/coefficient-growth metrics.
+- `v0.4`: HNF training/benchmark integration on top of the integer row-HNF
+  environment.
 - `v0.5`: SNF certificates with `(D,U,V)` and trace replay.
 - `v0.6`: Lean checker for small exported RREF/SNF certificates.
 - `v0.7`: paper-style benchmark report.

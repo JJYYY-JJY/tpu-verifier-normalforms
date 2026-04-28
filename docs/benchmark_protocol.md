@@ -92,7 +92,9 @@ Matrix families:
 - Dense uniform matrices over `F_p`.
 - Sparse Bernoulli-support matrices with nonzero field values.
 - Low-rank products `A * B mod p`.
-- Future integer HNF/SNF families with coefficient-growth tracking.
+- Sparse integer matrices with Bernoulli support and selected entries sampled
+  from `[-entry_bound, entry_bound] \ {0}`. The default `entry_bound` is `9`.
+- Future SNF families and HNF training/rollout benchmark reports.
 
 No benchmark may replace a failed neural rollout with a deterministic teacher
 without reporting the rollout as failed.
