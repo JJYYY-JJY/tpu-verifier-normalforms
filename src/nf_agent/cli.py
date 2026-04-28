@@ -12,7 +12,7 @@ from nf_agent.benchmarks import (
 from nf_agent.benchmarks.rref_benchmark import BenchmarkSource, MatrixFamily
 from nf_agent.data.matrix_families import dense_random_matrix, sparse_random_matrix
 from nf_agent.data.rref_shards import write_rref_shard
-from nf_agent.env.rref_modp import RowOp, rref_leftmost
+from nf_agent.env.rref_modp import RowOp, is_rref_modp, replay_row_ops, rref_leftmost
 from nf_agent.rollout import RREFPivotRolloutConfig, rollout_rref_pivot_sample
 from nf_agent.train import TrainConfig, train_rref_pivot
 
@@ -307,3 +307,36 @@ def report() -> None:
 @report.command("status")
 def report_status() -> None:
     _emit_json({"status": "not_implemented", "reason": "v0.7 roadmap"})
+
+
+@report.command("rref-certificate")
+@click.option("--rows", type=int, required=True)
+@click.option("--cols", type=int, required=True)
+@click.option("--p", "modulus", type=int, default=101, show_default=True)
+@click.option("--seed", type=int, default=0, show_default=True)
+@click.option("--teacher", type=click.Choice(["leftmost"]), required=True)
+def report_rref_certificate(rows: int, cols: int, modulus: int, seed: int, teacher: str) -> None:
+    """Emit a small RREF JSON certificate for Lean checker tests."""
+    try:
+        if teacher != "leftmost":
+            raise ValueError(f"unknown explicit teacher: {teacher}")
+        matrix = dense_random_matrix(rows=rows, cols=cols, p=modulus, seed=seed)
+        result = rref_leftmost(matrix, modulus)
+        if replay_row_ops(matrix, result.ops, modulus) != result.final_matrix:
+            raise ValueError("generated RREF certificate does not replay")
+        if not is_rref_modp(result.final_matrix, modulus):
+            raise ValueError("generated final matrix is not RREF")
+    except (TypeError, ValueError, IndexError, ZeroDivisionError) as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    _emit_json(
+        {
+            "kind": "rref_modp",
+            "modulus": result.modulus,
+            "shape": [rows, cols],
+            "input": matrix,
+            "ops": [_row_op_to_dict(op) for op in result.ops],
+            "final": result.final_matrix,
+            "pivots": [{"row": pivot.row, "col": pivot.col} for pivot in result.pivots],
+        }
+    )
