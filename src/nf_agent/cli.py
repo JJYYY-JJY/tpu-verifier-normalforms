@@ -3,7 +3,12 @@ from typing import Any, cast
 
 import click
 
-from nf_agent.benchmarks import RREFBenchmarkConfig, run_rref_benchmark
+from nf_agent.benchmarks import (
+    HNFBenchmarkConfig,
+    RREFBenchmarkConfig,
+    run_hnf_benchmark,
+    run_rref_benchmark,
+)
 from nf_agent.benchmarks.rref_benchmark import BenchmarkSource, MatrixFamily
 from nf_agent.data.matrix_families import dense_random_matrix, sparse_random_matrix
 from nf_agent.data.rref_shards import write_rref_shard
@@ -259,6 +264,37 @@ def benchmark_rref(
             )
         )
     except (TypeError, ValueError, IndexError, ZeroDivisionError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(result)
+
+
+@benchmark.command("hnf")
+@click.option("--rows", type=int, required=True)
+@click.option("--cols", type=int, required=True)
+@click.option("--count", type=int, required=True)
+@click.option("--density", type=float, default=0.2, show_default=True)
+@click.option("--entry-bound", type=int, default=9, show_default=True)
+@click.option("--seed-start", type=int, default=0, show_default=True)
+def benchmark_hnf(
+    rows: int,
+    cols: int,
+    count: int,
+    density: float,
+    entry_bound: int,
+    seed_start: int,
+) -> None:
+    try:
+        result = run_hnf_benchmark(
+            HNFBenchmarkConfig(
+                count=count,
+                rows=rows,
+                cols=cols,
+                density=density,
+                entry_bound=entry_bound,
+                seed_start=seed_start,
+            )
+        )
+    except (TypeError, ValueError) as exc:
         raise click.ClickException(str(exc)) from exc
     _emit_json(result)
 
