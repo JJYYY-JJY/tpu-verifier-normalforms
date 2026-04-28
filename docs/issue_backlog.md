@@ -14,5 +14,6 @@
 - [done] [hnf] Prototype integer HNF environment with coefficient-growth tracking
 - [done] [bench] Add HNF row-HNF benchmark suite
 - [done] [snf] Define SNF certificate JSON schema
+- [done] [snf] Add SNF certificate replay and equation verifier
 - [done] [lean] Initialize Lake workspace for certificate checker
 - [done] [docs] Write design.md and benchmark_protocol.md

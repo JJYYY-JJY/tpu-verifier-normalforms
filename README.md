@@ -24,6 +24,11 @@ integer matrix
 -> exact coefficient-growth metrics
 ```
 
+The v0.5 SNF certificate verifier accepts integer certificates with `(D,U,V)`
+plus row/column operation traces. It validates the JSON-compatible schema,
+replays row ops then column ops, checks recorded transforms against identity
+replay, and verifies `U * input * V = D` using exact integer arithmetic.
+
 ## Correctness Model
 
 - All verifier paths are exact integer/modular arithmetic.

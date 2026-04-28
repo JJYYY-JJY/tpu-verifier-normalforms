@@ -31,8 +31,8 @@ portable JSON certificate schema.
 ## SNF Certificates
 
 Integer SNF certificates use schema version `snf-certificate-json-v0.1` and
-kind `snf_int`. The Python schema and structural validator live in
-`nf_agent.certificates`.
+kind `snf_int`. The Python schema, structural validator, replay verifier, and
+equation checker live in `nf_agent.certificates`.
 
 ```json
 {
@@ -41,15 +41,14 @@ kind `snf_int`. The Python schema and structural validator live in
   "shape": [2, 2],
   "input": [[2, 4], [6, 8]],
   "diagonal": [[2, 0], [0, 4]],
-  "left_transform": [[1, 0], [0, 1]],
-  "right_transform": [[1, 0], [0, 1]],
+  "left_transform": [[1, 0], [3, -1]],
+  "right_transform": [[1, -2], [0, 1]],
   "row_ops": [
-    {"kind": "swap", "target": 0, "source": 1},
-    {"kind": "negate", "target": 1},
-    {"kind": "add", "target": 1, "source": 0, "scalar": -3}
+    {"kind": "add", "target": 1, "source": 0, "scalar": -3},
+    {"kind": "negate", "target": 1}
   ],
   "col_ops": [
-    {"kind": "add", "target": 0, "source": 1, "scalar": 2}
+    {"kind": "add", "target": 1, "source": 0, "scalar": -2}
   ]
 }
 ```
@@ -68,9 +67,19 @@ Structural validation obligations:
 - Bound `row_ops` by the row count and `col_ops` by the column count. Supported
   exact integer operations are `swap`, `negate`, and `add`.
 
+Verified checker obligations:
+
+- Replay `row_ops` from `input`, then replay `col_ops`, and compare the final
+  matrix to `diagonal`.
+- Replay `row_ops` on the `rows x rows` identity and compare the result to
+  `left_transform`.
+- Replay `col_ops` on the `cols x cols` identity and compare the result to
+  `right_transform`.
+- Verify `left_transform * input * right_transform = diagonal` using exact
+  integer arithmetic.
+- Treat `swap`, `negate`, and `add` elementary operation replay to identity as
+  the unimodularity witness for the recorded transformations.
+
 Deferred checker obligations:
 
-- Replay row and column operations.
-- Verify `left_transform * input * right_transform = diagonal`.
-- Prove or check unimodularity of the recorded transformations.
 - Extend the Lean checker after the Python certificate schema stabilizes.
