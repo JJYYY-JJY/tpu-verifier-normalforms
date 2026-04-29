@@ -4,9 +4,11 @@ import time
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, TypeVar
 
 from nf_agent.benchmarks.rref_benchmark import DensityProfile
+from nf_agent.data.hnf_shards import HNFShardSamples
 from nf_agent.data.matrix_families import sparse_integer_matrix
 from nf_agent.env.elementary_ops import Matrix
 from nf_agent.env.hnf_int import (
@@ -16,6 +18,13 @@ from nf_agent.env.hnf_int import (
     normalize_integer_matrix,
     replay_integer_row_ops,
     row_hnf,
+)
+from nf_agent.rollout import (
+    HNFPolicyRuntime,
+    HNFRolloutConfig,
+    load_hnf_policy_runtime,
+    rollout_hnf_beam_with_runtime,
+    rollout_hnf_policy_with_runtime,
 )
 
 MetricRecord = dict[str, Any]
@@ -30,6 +39,14 @@ class HNFBenchmarkConfig:
     density: float = 0.2
     entry_bound: int = 9
     seed_start: int = 0
+    model_data_path: str | Path | None = None
+    supervised_checkpoint_dir: str | Path | None = None
+    dagger_checkpoint_dir: str | Path | None = None
+    actor_critic_checkpoint_dir: str | Path | None = None
+    beam_checkpoint_dir: str | Path | None = None
+    max_steps: int | None = None
+    hidden_sizes: tuple[int, ...] = (256, 256)
+    beam_width: int = 8
 
 
 @dataclass(frozen=True)
@@ -155,6 +172,9 @@ def _aggregate_samples(samples: list[MetricRecord]) -> dict[str, Any]:
     }
     for key in (
         "trace_length",
+        "step_count",
+        "invalid_action_count",
+        "masked_action_count",
         "initial_density",
         "final_density",
         "max_density",
@@ -203,9 +223,110 @@ def _run_sample(sample: BenchmarkSample) -> MetricRecord:
     }
 
 
+def _model_data_path(config: HNFBenchmarkConfig) -> str | Path | None:
+    checkpoints = (
+        config.supervised_checkpoint_dir,
+        config.dagger_checkpoint_dir,
+        config.actor_critic_checkpoint_dir,
+        config.beam_checkpoint_dir,
+    )
+    if not any(checkpoint is not None for checkpoint in checkpoints):
+        return None
+    if config.model_data_path is None:
+        raise ValueError("model_data_path is required when HNF checkpoint_dir is provided")
+    samples = HNFShardSamples(config.model_data_path)
+    if (samples.rows, samples.cols) != (config.rows, config.cols):
+        raise ValueError("model data shape must match generated HNF benchmark config")
+    return config.model_data_path
+
+
+def _run_neural_sample(
+    sample: BenchmarkSample,
+    *,
+    runtime: HNFPolicyRuntime,
+    rollout_config: HNFRolloutConfig,
+    beam: bool = False,
+) -> MetricRecord:
+    if beam:
+        result, rollout_seconds = _time_call(
+            lambda: rollout_hnf_beam_with_runtime(runtime, rollout_config, sample.matrix)
+        )
+    else:
+        result, rollout_seconds = _time_call(
+            lambda: rollout_hnf_policy_with_runtime(runtime, rollout_config, sample.matrix)
+        )
+    replayed, replay_seconds = _time_call(
+        lambda: replay_integer_row_ops(result.initial_matrix, result.ops)
+    )
+    final_is_hnf, predicate_seconds = _time_call(lambda: is_row_hnf(result.final_matrix))
+    profile = integer_row_op_density_profile(result.initial_matrix, result.ops)
+    replay_ok = replayed == result.final_matrix
+    success = result.success and replay_ok and final_is_hnf
+    return {
+        "sample_index": sample.sample_index,
+        "seed": sample.seed,
+        "status": result.status,
+        "success": success,
+        "step_count": result.step_count,
+        "invalid_action_count": result.invalid_action_count,
+        "masked_action_count": result.masked_action_count,
+        "invalid_action_breakdown": dict(result.invalid_action_breakdown),
+        "checkpoint_step": result.checkpoint_step,
+        "replay_ok": replay_ok,
+        "final_is_hnf": final_is_hnf,
+        **_profile_metrics(profile),
+        "wall_time_seconds": rollout_seconds + replay_seconds + predicate_seconds,
+        "rollout_wall_time_seconds": rollout_seconds,
+        "replay_wall_time_seconds": replay_seconds,
+        "predicate_wall_time_seconds": predicate_seconds,
+    }
+
+
+def _policy_from_records(records: list[MetricRecord]) -> dict[str, Any]:
+    return {"aggregate": _aggregate_samples(records), "samples": records}
+
+
 def run_hnf_benchmark(config: HNFBenchmarkConfig) -> dict[str, Any]:
     samples = _generated_samples(config)
-    sample_records = [_run_sample(sample) for sample in samples]
+    row_hnf_records = [_run_sample(sample) for sample in samples]
+    policies: dict[str, Any] = {"row_hnf": _policy_from_records(row_hnf_records)}
+    model_data_path = _model_data_path(config)
+    if model_data_path is not None:
+        optional_policies: tuple[tuple[str, str | Path | None, bool], ...] = (
+            ("supervised_greedy", config.supervised_checkpoint_dir, False),
+            ("dagger_greedy", config.dagger_checkpoint_dir, False),
+            ("actor_critic_greedy", config.actor_critic_checkpoint_dir, False),
+            (
+                "beam",
+                config.beam_checkpoint_dir
+                or config.actor_critic_checkpoint_dir
+                or config.dagger_checkpoint_dir
+                or config.supervised_checkpoint_dir,
+                True,
+            ),
+        )
+        for policy_name, checkpoint_dir, use_beam in optional_policies:
+            if checkpoint_dir is None:
+                continue
+            rollout_config = HNFRolloutConfig(
+                data_path=model_data_path,
+                checkpoint_dir=checkpoint_dir,
+                max_steps=config.max_steps,
+                hidden_sizes=config.hidden_sizes,
+                beam_width=config.beam_width,
+            )
+            runtime = load_hnf_policy_runtime(rollout_config)
+            records = [
+                _run_neural_sample(
+                    sample,
+                    runtime=runtime,
+                    rollout_config=rollout_config,
+                    beam=use_beam,
+                )
+                for sample in samples
+            ]
+            policies[policy_name] = _policy_from_records(records)
+
     return {
         "status": "ok",
         "source": "generated",
@@ -216,6 +337,7 @@ def run_hnf_benchmark(config: HNFBenchmarkConfig) -> dict[str, Any]:
         "density": config.density,
         "entry_bound": config.entry_bound,
         "seed_start": config.seed_start,
-        "aggregate": _aggregate_samples(sample_records),
-        "samples": sample_records,
+        "policies": policies,
+        "aggregate": policies["row_hnf"]["aggregate"],
+        "samples": policies["row_hnf"]["samples"],
     }
