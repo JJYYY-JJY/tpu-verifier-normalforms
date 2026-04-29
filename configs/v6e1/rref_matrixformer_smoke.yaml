@@ -1,8 +1,13 @@
-# Planned v6e1 config. Current CLI does not consume this file yet.
 task: rref_matrixformer_smoke
+profile:
+  name: local-rref-matrixformer-smoke
 data:
-  schema: rref-state-action-npz-v1
-  path: /tmp/nf-v6e1/data/rref_smoke_state_action.npz
+  trace_schema: rref-backward-trace-npz-v1
+  state_schema: rref-state-action-npz-v1
+  format: zarr
+  count: 8
+  seed_start: 0
+  max_backward_ops: 8
 field:
   modulus: 101
 matrix:
@@ -11,24 +16,25 @@ matrix:
   cols: 16
 model:
   name: rref-matrixformer
-  row_embedding_dim: 64
-  col_embedding_dim: 64
-  hidden_dim: 256
-  layers: 4
+  row_embedding_dim: 8
+  col_embedding_dim: 8
+  hidden_dim: 32
+  layers: 1
+  num_heads: 1
 train:
   steps: 10
-  batch_size: auto
-  precision: bf16
+  batch_size: 4
   seed: 0
 rollout:
-  command: rref-matrixformer
-  strategy: greedy
-  max_steps: 160
+  command: rref-verifier-beam
+  max_steps: 16
+  beam_width: 4
+  batch_size: auto
 success:
   require_finite_loss: true
-  require_checkpoint_rollout: true
+  require_checkpoint_beam: true
   require_explicit_failure_status: true
 artifacts:
-  checkpoint_dir: /tmp/nf-v6e1/checkpoints/rref_matrixformer_smoke
-  report_dir: /tmp/nf-v6e1/reports/rref_matrixformer_smoke
+  work_dir: /tmp/nf-v6e1/rref_matrixformer_smoke/work
+  report_dir: /tmp/nf-v6e1/rref_matrixformer_smoke/report
   commit_policy: compact_reports_only

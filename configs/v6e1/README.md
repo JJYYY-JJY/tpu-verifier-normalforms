@@ -1,32 +1,36 @@
 # v6e1 Configs
 
-These YAML files are planned CertiNF-v6e profile specs. Most are not consumed
-by the current CLI yet.
+These YAML files define CertiNF-v6e profile specs. The RREF MatrixFormer smoke
+and large profile are consumed by `scripts/rref_v6e_profile.py`.
 
-Current executable configs remain the flat files under `configs/`. The v6e1
-files define the intended shape for future commands such as:
+The executable v1.0-beta1 RREF surface is:
 
+- `nf-agent profile v6e-status`
+- `nf-agent data make-rref-backward-shard`
 - `nf-agent data make-rref-state-shard`
 - `nf-agent train rref-matrixformer`
-- `nf-agent rollout rref-matrixformer`
 - `nf-agent rollout rref-verifier-beam`
 - `nf-agent report v6e-profile`
+- `python scripts/rref_v6e_profile.py`
 
-The implemented alpha NPZ smoke commands are:
+Local Zarr smoke:
 
 ```bash
+nf-agent profile v6e-status \
+  --memory-profile /tmp/nf-v6e1/profile.json
+
 nf-agent data make-rref-backward-shard \
   --config configs/rref_backward_4x4_mod101.yaml \
   --count 4 \
   --seed-start 0 \
-  --out /tmp/rref_backward_4x4_smoke.npz
+  --out /tmp/rref_backward_4x4_smoke.zarr
 
 nf-agent data make-rref-state-shard \
-  --trace-shard /tmp/rref_backward_4x4_smoke.npz \
-  --out /tmp/rref_state_4x4_smoke.npz
+  --trace-shard /tmp/rref_backward_4x4_smoke.zarr \
+  --out /tmp/rref_state_4x4_smoke.zarr
 
 nf-agent train rref-matrixformer \
-  --data /tmp/rref_state_4x4_smoke.npz \
+  --data /tmp/rref_state_4x4_smoke.zarr \
   --steps 2 \
   --batch-size 4 \
   --learning-rate 0.001 \
@@ -38,21 +42,33 @@ nf-agent train rref-matrixformer \
   --layers 1 \
   --num-heads 1
 
-nf-agent rollout rref-matrixformer \
-  --data /tmp/rref_state_4x4_smoke.npz \
+nf-agent rollout rref-verifier-beam \
+  --data /tmp/rref_state_4x4_smoke.zarr \
   --checkpoint /tmp/rref_matrixformer_smoke_ckpt \
   --sample-index 0 \
   --max-steps 8 \
+  --beam-width 4 \
+  --batch-size auto \
   --row-embedding-dim 8 \
   --col-embedding-dim 8 \
   --hidden-dim 32 \
   --layers 1 \
   --num-heads 1
+
+python scripts/rref_v6e_profile.py \
+  --config configs/v6e1/rref_matrixformer_smoke.yaml \
+  --work-dir /tmp/nf-v6e1/rref_matrixformer_smoke/work \
+  --out-dir /tmp/nf-v6e1/rref_matrixformer_smoke/report
 ```
 
-They currently support NPZ smoke shards and local greedy checkpoint rollout
-only. The large `configs/v6e1/*` files remain protocol/spec inputs until the
-Zarr, TPU batched beam/search, and v6e profile runners land.
+Colab TPU acceptance uses `configs/v6e1/rref_large_profile.yaml`:
+
+```bash
+python scripts/rref_v6e_profile.py \
+  --config configs/v6e1/rref_large_profile.yaml \
+  --work-dir /tmp/nf-v6e1/rref_large/work \
+  --out-dir /tmp/nf-v6e1/rref_large/report
+```
 
 Large outputs referenced by these configs must stay outside git. Commit only
 compact report JSON/Markdown, small fixtures, and sanitized config files.
