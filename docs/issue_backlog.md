@@ -1,17 +1,30 @@
 # Issue Backlog
 
-- [env] Implement finite-field RREF environment with exact modular row operations
-- [env] Add RREF predicate and oracle equivalence tests
-- [data] Implement matrix family generator for dense/sparse/low-rank matrices
-- [teacher] Implement leftmost and min-fill pivot teachers
-- [data] Serialize teacher trajectories into fixed-shape NPZ shards
-- [model] Implement masked PivotMLP policy in Flax
-- [train] Add JAX/Optax imitation learning loop
-- [rollout] Implement verifier-guided rollout without automatic fallback
-- [bench] Add RREF benchmark suite and fill-in metrics
-- [notebook] Add Colab v6e smoke test and training notebook
-- [hnf] Prototype integer HNF environment with coefficient-growth tracking
-- [snf] Define SNF certificate JSON schema
-- [lean] Initialize Lake workspace for certificate checker
-- [docs] Write design.md and benchmark_protocol.md
-
+- [done] [env] Implement finite-field RREF environment with exact modular row operations
+- [done] [env] Add RREF predicate and oracle equivalence tests
+- [done] [data] Implement matrix family generator for dense/sparse/low-rank matrices
+- [done] [teacher] Implement leftmost pivot teacher
+- [done] [teacher] Implement min-fill pivot teacher
+- [done] [data] Serialize teacher trajectories into fixed-shape NPZ shards
+- [done] [model] Implement masked PivotMLP policy in Flax
+- [done] [train] Add JAX/Optax imitation learning loop
+- [done] [rollout] Implement verifier-guided rollout without automatic fallback
+- [done] [bench] Add RREF benchmark suite and fill-in metrics
+- [done] [notebook] Add Colab v6e smoke test and training notebook
+- [done] [hnf] Prototype integer HNF environment with coefficient-growth tracking
+- [done] [bench] Add HNF row-HNF benchmark suite
+- [done] [snf] Define SNF certificate JSON schema
+- [done] [snf] Add SNF certificate replay and equation verifier
+- [done] [lean] Initialize Lake workspace for certificate checker
+- [done] [lean] Add RREF JSON certificate checker
+- [done] [lean] Add SNF JSON certificate checker
+- [done] [docs] Write design.md and benchmark_protocol.md
+- [done] [report] Add paper-style benchmark report
+- [done] [data] Add HNF v0.8 teacher trajectory NPZ shards
+- [done] [model] Add HNFPolicyMLP with operation and value heads
+- [done] [train] Add HNF supervised imitation, DAgger, and actor-critic loops
+- [done] [rollout] Add HNF greedy neural rollout and verifier beam search
+- [done] [bench] Add HNF learned-policy benchmark schema with row_hnf aliases
+- [done] [experiment] Add HNF v0.8 report bundle and threshold verdict
+- [done] [bench] Add SNF certificate benchmark and report coverage
+- [done] [cli] Refresh train/report status surfaces

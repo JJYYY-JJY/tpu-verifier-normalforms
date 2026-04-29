@@ -1,2 +1,3 @@
 import VerifierNormalForms.Basic
-
+import VerifierNormalForms.RREF
+import VerifierNormalForms.SNF

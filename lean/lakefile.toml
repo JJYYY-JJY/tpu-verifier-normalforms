@@ -1,6 +1,6 @@
 name = "verifier_normal_forms"
 version = "0.1.0"
-defaultTargets = ["VerifierNormalForms"]
+defaultTargets = ["VerifierNormalForms", "Test"]
 testDriver = "Test"
 
 [[lean_lib]]
@@ -9,4 +9,3 @@ name = "VerifierNormalForms"
 [[lean_lib]]
 name = "Test"
 globs = ["Test.+"]
-
