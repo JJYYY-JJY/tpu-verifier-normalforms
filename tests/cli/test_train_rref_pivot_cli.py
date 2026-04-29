@@ -61,6 +61,67 @@ def test_train_rref_pivot_cli_runs_and_emits_json(tmp_path: Path) -> None:
     assert payload["data_schema_version"] == "rref-teacher-trajectory-npz-v0.2"
 
 
+def test_train_rref_pivot_cli_accepts_checkpoint_every_and_restores(
+    tmp_path: Path,
+) -> None:
+    shard_path = tmp_path / "rref_cli_checkpoint_every.npz"
+    write_rref_shard(config_path=CONFIG, count=8, seed_start=0, out_path=shard_path)
+    out_dir = tmp_path / "ckpt"
+    runner = CliRunner()
+
+    result = runner.invoke(
+        main,
+        [
+            "train",
+            "rref-pivot",
+            "--data",
+            str(shard_path),
+            "--steps",
+            "2",
+            "--batch-size",
+            "4",
+            "--checkpoint-every",
+            "2",
+            "--hidden-size",
+            "32",
+            "--out",
+            str(out_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["status"] == "ok"
+    assert payload["final_step"] == 2
+    assert payload["latest_step"] == 2
+    assert payload["checkpoint_every"] == 2
+
+    resumed = runner.invoke(
+        main,
+        [
+            "train",
+            "rref-pivot",
+            "--data",
+            str(shard_path),
+            "--steps",
+            "1",
+            "--batch-size",
+            "4",
+            "--checkpoint-every",
+            "2",
+            "--hidden-size",
+            "32",
+            "--out",
+            str(out_dir),
+        ],
+    )
+
+    assert resumed.exit_code == 0, resumed.output
+    resumed_payload = json.loads(resumed.output)
+    assert resumed_payload["final_step"] == 3
+    assert resumed_payload["latest_step"] == 3
+
+
 def test_train_rref_pivot_cli_rejects_invalid_args(tmp_path: Path) -> None:
     shard_path = tmp_path / "rref_cli.npz"
     write_rref_shard(config_path=CONFIG, count=2, seed_start=0, out_path=shard_path)

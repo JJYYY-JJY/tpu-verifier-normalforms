@@ -150,6 +150,7 @@ def train_status() -> None:
 @click.option("--learning-rate", type=float, default=0.001, show_default=True)
 @click.option("--seed", type=int, default=0, show_default=True)
 @click.option("--out", "out_dir", type=click.Path(file_okay=False), required=True)
+@click.option("--checkpoint-every", type=int, default=1, show_default=True)
 @click.option(
     "--hidden-size",
     "hidden_sizes",
@@ -164,6 +165,7 @@ def train_rref_pivot_cli(
     learning_rate: float,
     seed: int,
     out_dir: str,
+    checkpoint_every: int,
     hidden_sizes: tuple[int, ...],
 ) -> None:
     try:
@@ -175,6 +177,7 @@ def train_rref_pivot_cli(
                 learning_rate=learning_rate,
                 seed=seed,
                 out_dir=out_dir,
+                checkpoint_every=checkpoint_every,
                 hidden_sizes=hidden_sizes or (256, 256),
             )
         )

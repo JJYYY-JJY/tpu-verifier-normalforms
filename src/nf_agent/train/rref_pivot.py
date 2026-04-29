@@ -28,6 +28,7 @@ class TrainConfig:
     out_dir: str | Path = Path("results/checkpoints/rref_pivot")
     hidden_sizes: tuple[int, ...] = (256, 256)
     max_to_keep: int = 3
+    checkpoint_every: int = 1
 
 
 def _validate_config(config: TrainConfig) -> None:
@@ -39,6 +40,8 @@ def _validate_config(config: TrainConfig) -> None:
         raise ValueError("learning_rate must be positive")
     if config.max_to_keep <= 0:
         raise ValueError("max_to_keep must be positive")
+    if config.checkpoint_every <= 0:
+        raise ValueError("checkpoint_every must be positive")
     if not config.hidden_sizes:
         raise ValueError("hidden_sizes must be non-empty")
     if any(hidden_size <= 0 for hidden_size in config.hidden_sizes):
@@ -248,7 +251,9 @@ def train_rref_pivot(config: TrainConfig) -> dict[str, Any]:
         final_metrics = {
             key: float(np.asarray(jax.device_get(value))) for key, value in raw_metrics.items()
         }
-        manager.save(int(state.step), args=ocp.args.StandardSave(state))
+        is_final_step = step_offset == config.steps - 1
+        if int(state.step) % config.checkpoint_every == 0 or is_final_step:
+            manager.save(int(state.step), args=ocp.args.StandardSave(state))
 
     manager.wait_until_finished()
     latest_step = manager.latest_step()
@@ -268,6 +273,7 @@ def train_rref_pivot(config: TrainConfig) -> dict[str, Any]:
         "per_head_metrics": per_head_metrics,
         "checkpoint_dir": str(Path(config.out_dir)),
         "latest_step": latest_step,
+        "checkpoint_every": config.checkpoint_every,
         "data_schema_version": samples.metadata["schema_version"],
         "parameters_changed": _params_changed(initial_params, state.params),
     }

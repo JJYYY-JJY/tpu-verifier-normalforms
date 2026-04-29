@@ -80,6 +80,7 @@ def test_restore_latest_rref_pivot_checkpoint_continues_step_count(tmp_path: Pat
     [
         ({"steps": 0}, "steps must be positive"),
         ({"batch_size": 0}, "batch_size must be positive"),
+        ({"checkpoint_every": 0}, "checkpoint_every must be positive"),
         ({"data_path": Path("missing.npz")}, "data path does not exist"),
     ],
 )

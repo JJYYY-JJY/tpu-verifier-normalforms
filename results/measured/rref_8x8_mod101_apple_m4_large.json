@@ -1,0 +1,165 @@
+{
+  "benchmark": {
+    "cols": 8,
+    "count": 512,
+    "modulus": 101,
+    "policies": {
+      "leftmost": {
+        "mean_fill_in_delta": 0.0001220703125,
+        "mean_final_density": 0.125732421875,
+        "mean_initial_density": 0.98944091796875,
+        "mean_max_density": 0.98956298828125,
+        "mean_predicate_wall_time_seconds": 5.960955206774088e-06,
+        "mean_rank": 7.9921875,
+        "mean_replay_wall_time_seconds": 0.00021553566773491184,
+        "mean_teacher_wall_time_seconds": 0.0002552413810121834,
+        "mean_trace_length": 63.337890625,
+        "mean_wall_time_seconds": 0.00047673800395386934,
+        "sample_count": 512,
+        "samples_per_second": 2097.588175699043,
+        "status_counts": {
+          "success": 512
+        },
+        "success_count": 512,
+        "success_rate": 1.0
+      },
+      "neural": {
+        "mean_fill_in_delta": 0.010528564453125,
+        "mean_final_density": 0.989898681640625,
+        "mean_initial_density": 0.98944091796875,
+        "mean_invalid_action_count": 9.619140625,
+        "mean_masked_action_count": 9.619140625,
+        "mean_max_density": 0.999969482421875,
+        "mean_predicate_wall_time_seconds": 3.4196056049040635e-06,
+        "mean_replay_wall_time_seconds": 0.00024276285336100045,
+        "mean_rollout_wall_time_seconds": 0.43207200666995504,
+        "mean_step_count": 72.0,
+        "mean_wall_time_seconds": 0.43231818912892095,
+        "sample_count": 512,
+        "samples_per_second": 2.3131110953598846,
+        "status_counts": {
+          "max_steps_exceeded": 512
+        },
+        "success_count": 0,
+        "success_rate": 0.0
+      }
+    },
+    "rows": 8,
+    "source": "shard",
+    "status": "ok",
+    "wall_time_seconds": 222.35240079200594
+  },
+  "calibration": {
+    "candidates": [
+      {
+        "batch_size": 128,
+        "checkpoint_step": 5,
+        "final_loss": 8.906927108764648,
+        "samples_per_second": 260.7025438292148,
+        "status": "ok",
+        "wall_time_seconds": 2.4549050830100896
+      },
+      {
+        "batch_size": 256,
+        "checkpoint_step": 5,
+        "final_loss": 8.797847747802734,
+        "samples_per_second": 1730.6779962703497,
+        "status": "ok",
+        "wall_time_seconds": 0.739594541999395
+      },
+      {
+        "batch_size": 512,
+        "checkpoint_step": 5,
+        "final_loss": 8.765565872192383,
+        "samples_per_second": 2882.3475809746624,
+        "status": "ok",
+        "wall_time_seconds": 0.8881649169925367
+      }
+    ],
+    "selected_batch_size": 512,
+    "status": "ok",
+    "wall_time_seconds": 4.0828084999957355
+  },
+  "config": {
+    "batch_candidates": [
+      128,
+      256,
+      512
+    ],
+    "benchmark_count": 512,
+    "checkpoint_every": 50,
+    "hidden_sizes": [
+      512,
+      512
+    ],
+    "max_steps": 72,
+    "shard_count": 4096,
+    "train_steps": 2000
+  },
+  "env": {
+    "JAX_PLATFORMS": "cpu",
+    "OMP_NUM_THREADS": "10",
+    "VECLIB_MAXIMUM_THREADS": "10",
+    "XLA_FLAGS": "--xla_cpu_multi_thread_eigen=true intra_op_parallelism_threads=10"
+  },
+  "host": {
+    "machine": "arm64",
+    "processor": "arm",
+    "python_executable": "python",
+    "release": "25.5.0",
+    "system": "Darwin"
+  },
+  "jax": {
+    "backend": "cpu",
+    "devices": [
+      {
+        "device_kind": "cpu",
+        "platform": "cpu"
+      }
+    ],
+    "local_device_count": 1,
+    "required_backend": "cpu"
+  },
+  "no_fallback_statement": "No hidden teacher fallback: leftmost is reported only as an explicit baseline; neural failures remain neural status counts.",
+  "profile": "apple-m4-large",
+  "schema_version": "rref-measured-run-v1",
+  "selected_batch_size": 512,
+  "stage_wall_times": {
+    "benchmark_seconds": 222.35240079200594,
+    "calibration_seconds": 4.0828084999957355,
+    "shard_seconds": 1.1328613329969812,
+    "total_seconds": 279.361363582997,
+    "train_seconds": 51.789411125006154
+  },
+  "status": "ok",
+  "task": {
+    "cols": 8,
+    "modulus": 101,
+    "rows": 8
+  },
+  "train": {
+    "checkpoint_every": 50,
+    "checkpoint_step": 2000,
+    "final_loss": 1.784808874130249,
+    "final_step": 2000,
+    "parameters_changed": true,
+    "per_head_metrics": {
+      "op_kind_loss": 0.04086984321475029,
+      "op_scalar_loss": 1.6043626070022583,
+      "op_source_loss": 0.0011490600882098079,
+      "op_target_loss": 0.13721714913845062,
+      "pivot_active_loss": 0.0012102167820557952,
+      "pivot_col_loss": 0.0
+    },
+    "samples_per_second_proxy": 19772.381607667456,
+    "samples_seen_proxy": 1024000,
+    "status": "ok",
+    "steps_completed": 2000,
+    "wall_time_seconds": 51.789411125006154
+  },
+  "versions": {
+    "jax": "0.10.0",
+    "jaxlib": "0.10.0",
+    "python": "3.12.13"
+  }
+}

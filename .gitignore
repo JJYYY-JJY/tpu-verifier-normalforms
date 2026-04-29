@@ -18,4 +18,5 @@ results/plots/*.png
 !results/plots/.gitkeep
 results/tables/*.csv
 !results/tables/.gitkeep
+rref_v6e_smoke_training.ipynb - Colab.pdf
 lean/.lake/
