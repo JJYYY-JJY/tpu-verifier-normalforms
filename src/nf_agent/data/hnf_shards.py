@@ -11,6 +11,7 @@ import yaml  # type: ignore[import-untyped]
 from grain import MapDataset  # type: ignore[import-untyped]
 
 from nf_agent.data.matrix_families import sparse_integer_matrix
+from nf_agent.data.shard_storage import load_shard_arrays, shard_format, write_shard_arrays
 from nf_agent.env.elementary_ops import Matrix
 from nf_agent.env.hnf_int import (
     IntegerRowOp,
@@ -21,6 +22,7 @@ from nf_agent.env.hnf_int import (
 )
 
 SCHEMA_VERSION = "hnf-teacher-trajectory-npz-v0.8"
+BACKWARD_SCHEMA_VERSION = "hnf-backward-trace-zarr-v1"
 PADDING_VALUE = -1
 
 IntegerOpKindCode: TypeAlias = Literal[0, 1, 2, 3]
@@ -72,6 +74,66 @@ class HNFTrajectory:
     final_matrix: Matrix
     ops: tuple[IntegerRowOp, ...]
     seed: int | None = None
+
+
+@dataclass(frozen=True)
+class HNFBackwardFamilyConfig:
+    name: str
+    rows: int
+    cols: int
+    density: float
+    entry_bound: int = 9
+
+    def as_hnf_shard_config(self) -> HNFShardConfig:
+        return HNFShardConfig(
+            task="hnf",
+            family="sparse",
+            rows=self.rows,
+            cols=self.cols,
+            density=self.density,
+            entry_bound=self.entry_bound,
+        )
+
+    def as_metadata(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "family": "sparse",
+            "rows": self.rows,
+            "cols": self.cols,
+            "density": self.density,
+            "entry_bound": self.entry_bound,
+        }
+
+
+@dataclass(frozen=True)
+class HNFBackwardShardConfig:
+    task: Literal["hnf_growth_search"]
+    families: tuple[HNFBackwardFamilyConfig, ...]
+    storage_format: Literal["npz", "zarr"]
+    require_unimodular_ops: bool = True
+
+    def family_config(self, name: str) -> HNFBackwardFamilyConfig:
+        for family in self.families:
+            if family.name == name:
+                return family
+        names = ", ".join(family.name for family in self.families)
+        raise ValueError(f"unknown HNF growth family {name!r}; available: {names}")
+
+    def as_metadata_config(
+        self,
+        family: HNFBackwardFamilyConfig,
+        storage_format: str,
+    ) -> dict[str, Any]:
+        return {
+            "task": self.task,
+            "family": family.as_metadata(),
+            "backward_trace": {
+                "schema": BACKWARD_SCHEMA_VERSION,
+                "format": storage_format,
+                "require_unimodular_ops": self.require_unimodular_ops,
+                "require_exact_replay": True,
+            },
+        }
 
 
 def _require_mapping(value: object, name: str) -> Mapping[str, Any]:
@@ -131,6 +193,66 @@ def load_hnf_shard_config(config_path: str | Path) -> HNFShardConfig:
     )
 
 
+def load_hnf_backward_shard_config(config_path: str | Path) -> HNFBackwardShardConfig:
+    raw = _load_yaml_mapping(Path(config_path))
+    task = raw.get("task")
+    if task != "hnf_growth_search":
+        raise ValueError(f"unsupported task for HNF backward shard: {task!r}")
+
+    raw_families = raw.get("integer_families")
+    if not isinstance(raw_families, Sequence) or isinstance(raw_families, str | bytes):
+        raise ValueError("integer_families must be a sequence")
+    families: list[HNFBackwardFamilyConfig] = []
+    seen_names: set[str] = set()
+    for index, value in enumerate(raw_families):
+        family = _require_mapping(value, f"integer_families[{index}]")
+        name = family.get("name")
+        if not isinstance(name, str) or not name:
+            raise ValueError(f"integer_families[{index}].name must be a nonempty string")
+        if name in seen_names:
+            raise ValueError(f"duplicate HNF growth family: {name}")
+        seen_names.add(name)
+        rows = _require_positive_int(family.get("rows"), f"integer_families[{index}].rows")
+        cols = _require_positive_int(family.get("cols"), f"integer_families[{index}].cols")
+        density = _require_float(family.get("density"), f"integer_families[{index}].density")
+        if not 0.0 <= density <= 1.0:
+            raise ValueError(f"integer_families[{index}].density must lie in [0, 1]")
+        entry_bound = _require_positive_int(
+            family.get("entry_bound", 9),
+            f"integer_families[{index}].entry_bound",
+        )
+        families.append(
+            HNFBackwardFamilyConfig(
+                name=name,
+                rows=rows,
+                cols=cols,
+                density=density,
+                entry_bound=entry_bound,
+            )
+        )
+    if not families:
+        raise ValueError("integer_families must contain at least one family")
+
+    backward_trace = _require_mapping(raw.get("backward_trace"), "backward_trace")
+    schema = backward_trace.get("schema")
+    if schema != BACKWARD_SCHEMA_VERSION:
+        raise ValueError(f"unsupported backward_trace.schema: {schema!r}")
+    output_format = backward_trace.get("format", "npz")
+    if output_format not in {"npz", "zarr"}:
+        raise ValueError("backward_trace.format must be 'npz' or 'zarr'")
+    if backward_trace.get("require_unimodular_ops") is False:
+        raise ValueError("backward_trace.require_unimodular_ops must not be false")
+    if backward_trace.get("require_exact_replay") is False:
+        raise ValueError("backward_trace.require_exact_replay must not be false")
+
+    return HNFBackwardShardConfig(
+        task="hnf_growth_search",
+        families=tuple(families),
+        storage_format=cast(Literal["npz", "zarr"], output_format),
+        require_unimodular_ops=True,
+    )
+
+
 def _encode_integer_row_op(
     op: IntegerRowOp,
     scalar_to_id: Mapping[int, int],
@@ -179,6 +301,40 @@ def _metadata_json(
         "input_scale": input_scale,
         "op_encoding": {"pad": 0, "swap": 1, "negate": 2, "add": 3},
         "padding_value": PADDING_VALUE,
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def _backward_metadata_json(
+    config_payload: Mapping[str, Any],
+    *,
+    count: int,
+    seed_start: int,
+    rows: int,
+    cols: int,
+    max_ops: int,
+    input_scale: int,
+    storage_format: str,
+) -> str:
+    config = dict(config_payload)
+    backward_trace = dict(_require_mapping(config.get("backward_trace"), "config.backward_trace"))
+    backward_trace["schema"] = BACKWARD_SCHEMA_VERSION
+    backward_trace["format"] = storage_format
+    backward_trace["require_exact_replay"] = True
+    backward_trace["require_unimodular_ops"] = True
+    config["backward_trace"] = backward_trace
+    payload = {
+        "schema_version": BACKWARD_SCHEMA_VERSION,
+        "config": config,
+        "count": count,
+        "seed_start": seed_start,
+        "seed_stop_exclusive": seed_start + count,
+        "shape": {"rows": rows, "cols": cols},
+        "max_ops": max_ops,
+        "input_scale": input_scale,
+        "op_encoding": {"pad": 0, "swap": 1, "negate": 2, "add": 3},
+        "padding_value": PADDING_VALUE,
+        "generation": "sparse-integer-row-hnf-teacher-trace",
     }
     return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
@@ -310,6 +466,61 @@ def generate_hnf_shard(config_path: str | Path, count: int, seed_start: int) -> 
     )
 
 
+def hnf_backward_shard_arrays_from_trajectories(
+    trajectories: Sequence[HNFTrajectory],
+    *,
+    config_payload: Mapping[str, Any],
+    seed_start: int = 0,
+    storage_format: str = "npz",
+) -> ShardArrays:
+    if storage_format not in {"npz", "zarr"}:
+        raise ValueError("storage_format must be 'npz' or 'zarr'")
+    shard = hnf_shard_arrays_from_trajectories(
+        trajectories,
+        config_payload=config_payload,
+        seed_start=seed_start,
+    )
+    metadata = _metadata_from_array(np.asarray(shard["metadata_json"]))
+    shape = _require_mapping(metadata.get("shape"), "metadata.shape")
+    shard["metadata_json"] = np.asarray(
+        _backward_metadata_json(
+            config_payload,
+            count=_require_positive_int(metadata.get("count"), "metadata.count"),
+            seed_start=seed_start,
+            rows=_require_positive_int(shape.get("rows"), "metadata.shape.rows"),
+            cols=_require_positive_int(shape.get("cols"), "metadata.shape.cols"),
+            max_ops=_require_positive_int(metadata.get("max_ops"), "metadata.max_ops"),
+            input_scale=_require_positive_int(
+                metadata.get("input_scale"),
+                "metadata.input_scale",
+            ),
+            storage_format=storage_format,
+        )
+    )
+    return shard
+
+
+def generate_hnf_backward_shard(
+    config_path: str | Path,
+    family: str,
+    count: int,
+    seed_start: int,
+    storage_format: str = "npz",
+) -> ShardArrays:
+    if count <= 0:
+        raise ValueError("count must be positive")
+    seed_start = _require_int(seed_start, "seed_start")
+    config = load_hnf_backward_shard_config(config_path)
+    family_config = config.family_config(family)
+    trajectories = _generate_trajectories(family_config.as_hnf_shard_config(), count, seed_start)
+    return hnf_backward_shard_arrays_from_trajectories(
+        trajectories,
+        config_payload=config.as_metadata_config(family_config, storage_format),
+        seed_start=seed_start,
+        storage_format=storage_format,
+    )
+
+
 def write_hnf_shard(
     config_path: str | Path,
     count: int,
@@ -343,10 +554,33 @@ def write_hnf_shard_from_trajectories(
     np.savez(path, **shard)  # type: ignore[arg-type]
 
 
+def write_hnf_backward_shard(
+    config_path: str | Path,
+    family: str,
+    count: int,
+    seed_start: int,
+    out_path: str | Path,
+) -> None:
+    if count <= 0:
+        raise ValueError("count must be positive")
+    path = Path(out_path)
+    storage_format = shard_format(path)
+    shard = generate_hnf_backward_shard(
+        config_path=config_path,
+        family=family,
+        count=count,
+        seed_start=seed_start,
+        storage_format=storage_format,
+    )
+    write_shard_arrays(path, shard)
+
+
 def _metadata_from_array(value: ShardValue) -> dict[str, Any]:
     if value.shape != ():
         raise ValueError("metadata_json must be a scalar JSON string")
     raw = value.item()
+    if isinstance(raw, bytes):
+        raw = raw.decode("utf-8")
     if not isinstance(raw, str):
         raw = str(raw)
     loaded = json.loads(raw)
@@ -358,6 +592,17 @@ def _metadata_from_array(value: ShardValue) -> dict[str, Any]:
 def _require_shape(array: ShardValue, name: str, expected: tuple[int, ...]) -> None:
     if array.shape != expected:
         raise ValueError(f"{name} must have shape {expected}, got {array.shape}")
+
+
+def _require_prefix_mask(mask: ShardValue, name: str) -> None:
+    for sample_index, row in enumerate(mask):
+        inactive_seen = False
+        for value in row:
+            active = bool(value)
+            if inactive_seen and active:
+                raise ValueError(f"{name} must be true-prefix padded at sample {sample_index}")
+            if not active:
+                inactive_seen = True
 
 
 def _validate_op_arrays(
@@ -372,6 +617,7 @@ def _validate_op_arrays(
     op_source = arrays["op_source"]
     op_scalar_id = arrays["op_scalar_id"]
     op_scalar_value = arrays["op_scalar_value"]
+    _require_prefix_mask(op_mask, "op_mask")
     inactive = np.logical_not(op_mask)
     if not np.all(op_kind[inactive] == 0):
         raise ValueError("op_kind padding must be 0 where op_mask is false")
@@ -393,6 +639,8 @@ def _validate_op_arrays(
     source_mask = op_mask & np.isin(op_kind, [1, 3])
     if np.any(op_source[source_mask] < 0) or np.any(op_source[source_mask] >= rows):
         raise ValueError("active swap/add op_source entries must be valid row indices")
+    if np.any(op_target[source_mask] == op_source[source_mask]):
+        raise ValueError("active swap/add target and source rows must be distinct")
     if not np.all(op_source[op_mask & (op_kind == 2)] == PADDING_VALUE):
         raise ValueError("negate op_source entries must be -1")
 
@@ -409,6 +657,18 @@ def _validate_op_arrays(
         expected_values = scalar_vocab[op_scalar_id[scalar_mask]]
         if not np.array_equal(op_scalar_value[scalar_mask], expected_values):
             raise ValueError("op_scalar_value entries must match scalar_vocab")
+
+
+def _validate_hnf_replay(arrays: Mapping[str, ShardValue]) -> None:
+    for sample_index in range(int(arrays["inputs"].shape[0])):
+        input_matrix = arrays["inputs"][sample_index].tolist()
+        final_matrix = arrays["finals"][sample_index].tolist()
+        ops = integer_row_ops_from_hnf_shard_arrays(arrays, sample_index)
+        replayed = replay_integer_row_ops(input_matrix, ops)
+        if replayed != final_matrix:
+            raise ValueError(f"sample {sample_index} does not replay to claimed final")
+        if not is_row_hnf(final_matrix):
+            raise ValueError(f"sample {sample_index} final matrix is not row HNF")
 
 
 def _load_validated_hnf_shard(path: str | Path) -> tuple[ShardArrays, dict[str, Any]]:
@@ -453,6 +713,53 @@ def _load_validated_hnf_shard(path: str | Path) -> tuple[ShardArrays, dict[str, 
     if not np.array_equal(arrays["scalar_vocab"], np.unique(arrays["scalar_vocab"])):
         raise ValueError("scalar_vocab must be sorted and unique")
     _validate_op_arrays(arrays, rows=rows, scalar_vocab=arrays["scalar_vocab"])
+    return arrays, metadata
+
+
+def load_hnf_backward_shard(path: str | Path) -> tuple[ShardArrays, dict[str, Any]]:
+    shard_path = Path(path)
+    arrays, metadata_json = load_shard_arrays(shard_path, _REQUIRED_SHARD_ARRAYS)
+
+    metadata = _metadata_from_array(metadata_json)
+    schema_version = metadata.get("schema_version")
+    if schema_version != BACKWARD_SCHEMA_VERSION:
+        raise ValueError(f"unsupported HNF backward shard schema_version: {schema_version!r}")
+    shape = _require_mapping(metadata.get("shape"), "metadata.shape")
+    rows = _require_positive_int(shape.get("rows"), "metadata.shape.rows")
+    cols = _require_positive_int(shape.get("cols"), "metadata.shape.cols")
+    count = _require_positive_int(metadata.get("count"), "metadata.count")
+    max_ops = _require_positive_int(metadata.get("max_ops"), "metadata.max_ops")
+    _require_positive_int(metadata.get("input_scale"), "metadata.input_scale")
+    if metadata.get("padding_value") != PADDING_VALUE:
+        raise ValueError("metadata.padding_value must be -1")
+
+    config = _require_mapping(metadata.get("config"), "metadata.config")
+    backward_trace = _require_mapping(
+        config.get("backward_trace"),
+        "metadata.config.backward_trace",
+    )
+    if backward_trace.get("schema") != BACKWARD_SCHEMA_VERSION:
+        raise ValueError("metadata.config.backward_trace.schema does not match schema_version")
+    if backward_trace.get("format") != shard_format(shard_path):
+        raise ValueError("metadata.config.backward_trace.format must match shard path format")
+    if backward_trace.get("require_unimodular_ops") is False:
+        raise ValueError("metadata.config.backward_trace.require_unimodular_ops must not be false")
+    if backward_trace.get("require_exact_replay") is False:
+        raise ValueError("metadata.config.backward_trace.require_exact_replay must not be false")
+
+    for key, expected_dtype in _REQUIRED_SHARD_ARRAYS.items():
+        if arrays[key].dtype != expected_dtype:
+            raise ValueError(f"{key} must have dtype {expected_dtype}, got {arrays[key].dtype}")
+    _require_shape(arrays["inputs"], "inputs", (count, rows, cols))
+    _require_shape(arrays["finals"], "finals", (count, rows, cols))
+    for key in ("op_kind", "op_target", "op_source", "op_scalar_id", "op_scalar_value", "op_mask"):
+        _require_shape(arrays[key], key, (count, max_ops))
+    if arrays["scalar_vocab"].ndim != 1:
+        raise ValueError("scalar_vocab must be one-dimensional")
+    if not np.array_equal(arrays["scalar_vocab"], np.unique(arrays["scalar_vocab"])):
+        raise ValueError("scalar_vocab must be sorted and unique")
+    _validate_op_arrays(arrays, rows=rows, scalar_vocab=arrays["scalar_vocab"])
+    _validate_hnf_replay(arrays)
     return arrays, metadata
 
 
