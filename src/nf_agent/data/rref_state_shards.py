@@ -15,6 +15,7 @@ from nf_agent.data.rref_backward_shards import (
     load_rref_backward_shard,
     row_ops_from_backward_shard_arrays,
 )
+from nf_agent.data.shard_storage import load_shard_arrays, shard_format, write_shard_arrays
 from nf_agent.env.elementary_ops import require_prime
 from nf_agent.env.rref_modp import RowOp, is_rref_modp, replay_row_ops
 
@@ -70,6 +71,8 @@ def _metadata_from_array(value: ShardValue) -> dict[str, Any]:
     if value.shape != ():
         raise ValueError("metadata_json must be a scalar JSON string")
     raw = value.item()
+    if isinstance(raw, bytes):
+        raw = raw.decode("utf-8")
     if not isinstance(raw, str):
         raw = str(raw)
     loaded = json.loads(raw)
@@ -112,9 +115,11 @@ def _metadata_json(
     trace_count: int,
     flat_count: int,
     max_ops: int,
+    storage_format: str,
 ) -> str:
     payload = {
         "schema_version": SCHEMA_VERSION,
+        "format": storage_format,
         "source_schema_version": source_metadata.get("schema_version"),
         "source_path": str(trace_shard_path),
         "source_count": source_metadata.get("count"),
@@ -233,8 +238,7 @@ def _set_trace_sample(
 
 def generate_rref_state_shard(trace_shard_path: str | Path) -> ShardArrays:
     trace_path = Path(trace_shard_path)
-    if trace_path.suffix != ".npz":
-        raise ValueError("trace shard path must end with .npz")
+    shard_format(trace_path)
     if not trace_path.exists():
         raise ValueError(f"trace shard path does not exist: {trace_path}")
 
@@ -352,6 +356,7 @@ def generate_rref_state_shard(trace_shard_path: str | Path) -> ShardArrays:
             trace_count=trace_count,
             flat_count=flat_count,
             max_ops=max_ops,
+            storage_format="npz",
         )
     )
     metadata = _metadata_from_array(arrays["metadata_json"])
@@ -361,11 +366,14 @@ def generate_rref_state_shard(trace_shard_path: str | Path) -> ShardArrays:
 
 def write_rref_state_shard(trace_shard_path: str | Path, out_path: str | Path) -> None:
     path = Path(out_path)
-    if path.suffix != ".npz":
-        raise ValueError("output path must end with .npz")
+    storage_format = shard_format(path)
     shard = generate_rref_state_shard(trace_shard_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(path, **shard)  # type: ignore[arg-type]
+    metadata = _metadata_from_array(shard["metadata_json"])
+    metadata["format"] = storage_format
+    metadata["source_path"] = str(Path(trace_shard_path))
+    shard["metadata_json"] = np.asarray(json.dumps(metadata, sort_keys=True, separators=(",", ":")))
+    _validate_state_action_arrays(shard, metadata)
+    write_shard_arrays(path, shard)
 
 
 def _validate_normalized_matrix_entries(array: ShardValue, name: str, p: int) -> None:
@@ -623,18 +631,7 @@ def _validate_state_action_arrays(
 
 def load_rref_state_shard(path: str | Path) -> tuple[ShardArrays, dict[str, Any]]:
     shard_path = Path(path)
-    if shard_path.suffix != ".npz":
-        raise ValueError("data path must end with .npz")
-    if not shard_path.exists():
-        raise ValueError(f"data path does not exist: {shard_path}")
-    with np.load(shard_path, allow_pickle=False) as shard:
-        missing = sorted(
-            key for key in [*_REQUIRED_ARRAYS.keys(), "metadata_json"] if key not in shard.files
-        )
-        if missing:
-            raise ValueError(f"missing required array(s): {', '.join(missing)}")
-        arrays = {key: np.asarray(shard[key]) for key in _REQUIRED_ARRAYS}
-        metadata_json = np.asarray(shard["metadata_json"])
+    arrays, metadata_json = load_shard_arrays(shard_path, _REQUIRED_ARRAYS)
 
     metadata = _metadata_from_array(metadata_json)
     _validate_state_action_arrays(arrays, metadata)
