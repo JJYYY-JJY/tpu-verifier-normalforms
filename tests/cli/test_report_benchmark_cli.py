@@ -21,7 +21,7 @@ def test_report_status_lists_implemented_report_commands() -> None:
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
     assert payload["status"] == "implemented"
-    assert payload["commands"] == ["benchmark", "rref-certificate"]
+    assert payload["commands"] == ["benchmark", "rref-certificate", "v6e-profile"]
     assert payload["benchmark_report_kinds"] == ["rref", "hnf", "snf"]
     assert payload["benchmark_report_suite"] == "paper-smoke"
 

@@ -946,6 +946,19 @@ def report_benchmark(
     _emit_json(result)
 
 
+@report.command("v6e-profile")
+@click.option("--input", "input_path", type=click.Path(exists=True, dir_okay=False), required=True)
+@click.option("--out-dir", type=click.Path(file_okay=False), required=True)
+def report_v6e_profile(input_path: str, out_dir: str) -> None:
+    try:
+        result = build_v6e_profile_report(
+            V6EProfileReportConfig(input_path=input_path, out_dir=out_dir)
+        )
+    except (OSError, TypeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(result)
+
+
 @report.command("rref-certificate")
 @click.option("--rows", type=int, required=True)
 @click.option("--cols", type=int, required=True)
