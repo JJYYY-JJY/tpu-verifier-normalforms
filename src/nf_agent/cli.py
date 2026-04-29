@@ -128,7 +128,7 @@ def data_sample(rows: int, cols: int, modulus: int, seed: int, density: float | 
 )
 @click.option("--count", type=int, required=True)
 @click.option("--seed-start", type=int, default=0, show_default=True)
-@click.option("--out", "out_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--out", "out_path", type=click.Path(), required=True)
 def make_rref_shard(config_path: str, count: int, seed_start: int, out_path: str) -> None:
     try:
         write_rref_shard(
@@ -171,6 +171,7 @@ def make_rref_backward_shard(
         {
             "status": "ok",
             "schema_version": RREF_BACKWARD_SCHEMA_VERSION,
+            "format": shard_format(Path(out_path)),
             "out": out_path,
             "count": count,
             "seed_start": seed_start,
@@ -179,8 +180,8 @@ def make_rref_backward_shard(
 
 
 @data.command("make-rref-state-shard")
-@click.option("--trace-shard", "trace_shard_path", type=click.Path(dir_okay=False), required=True)
-@click.option("--out", "out_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--trace-shard", "trace_shard_path", type=click.Path(), required=True)
+@click.option("--out", "out_path", type=click.Path(), required=True)
 def make_rref_state_shard(trace_shard_path: str, out_path: str) -> None:
     try:
         write_rref_state_shard(trace_shard_path=trace_shard_path, out_path=out_path)
@@ -191,6 +192,7 @@ def make_rref_state_shard(trace_shard_path: str, out_path: str) -> None:
         {
             "status": "ok",
             "schema_version": RREF_STATE_SCHEMA_VERSION,
+            "format": shard_format(Path(out_path)),
             "out": out_path,
             "trace_count": metadata["trace_count"],
             "flat_count": metadata["flat_count"],
@@ -245,7 +247,7 @@ def train_status() -> None:
 
 
 @train.command("rref-pivot")
-@click.option("--data", "data_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--data", "data_path", type=click.Path(), required=True)
 @click.option("--steps", type=int, required=True)
 @click.option("--batch-size", type=int, required=True)
 @click.option("--learning-rate", type=float, default=0.001, show_default=True)
@@ -288,7 +290,7 @@ def train_rref_pivot_cli(
 
 
 @train.command("rref-matrixformer")
-@click.option("--data", "data_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--data", "data_path", type=click.Path(), required=True)
 @click.option("--steps", type=int, required=True)
 @click.option("--batch-size", type=int, required=True)
 @click.option("--learning-rate", type=float, default=0.001, show_default=True)
@@ -487,7 +489,7 @@ def rollout_rref(rows: int, cols: int, modulus: int, seed: int, teacher: str) ->
 
 
 @rollout.command("rref-neural")
-@click.option("--data", "data_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--data", "data_path", type=click.Path(), required=True)
 @click.option("--checkpoint", "checkpoint_dir", type=click.Path(file_okay=False), required=True)
 @click.option("--sample-index", type=int, required=True)
 @click.option("--max-steps", type=int, default=None)
@@ -521,7 +523,7 @@ def rollout_rref_neural(
 
 
 @rollout.command("rref-matrixformer")
-@click.option("--data", "data_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--data", "data_path", type=click.Path(), required=True)
 @click.option("--checkpoint", "checkpoint_dir", type=click.Path(file_okay=False), required=True)
 @click.option("--sample-index", type=int, required=True)
 @click.option("--max-steps", type=int, default=None)
@@ -548,6 +550,54 @@ def rollout_rref_matrixformer(
                 checkpoint_dir=checkpoint_dir,
                 sample_index=sample_index,
                 max_steps=max_steps,
+                row_embedding_dim=row_embedding_dim,
+                col_embedding_dim=col_embedding_dim,
+                hidden_dim=hidden_dim,
+                layers=layers,
+                num_heads=num_heads,
+            )
+        )
+    except (TypeError, ValueError, IndexError, ZeroDivisionError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(result.as_json_dict())
+
+
+@rollout.command("rref-verifier-beam")
+@click.option("--data", "data_path", type=click.Path(), required=True)
+@click.option("--checkpoint", "checkpoint_dir", type=click.Path(file_okay=False), required=True)
+@click.option("--sample-index", type=int, required=True)
+@click.option("--max-steps", type=int, default=None)
+@click.option("--beam-width", type=int, default=8, show_default=True)
+@click.option("--batch-size", type=str, default="auto", show_default=True)
+@click.option("--row-embedding-dim", type=int, default=32, show_default=True)
+@click.option("--col-embedding-dim", type=int, default=32, show_default=True)
+@click.option("--hidden-dim", type=int, default=256, show_default=True)
+@click.option("--layers", type=int, default=2, show_default=True)
+@click.option("--num-heads", type=int, default=4, show_default=True)
+def rollout_rref_verifier_beam(
+    data_path: str,
+    checkpoint_dir: str,
+    sample_index: int,
+    max_steps: int | None,
+    beam_width: int,
+    batch_size: str,
+    row_embedding_dim: int,
+    col_embedding_dim: int,
+    hidden_dim: int,
+    layers: int,
+    num_heads: int,
+) -> None:
+    try:
+        parsed_batch_size: int | Literal["auto"]
+        parsed_batch_size = "auto" if batch_size == "auto" else int(batch_size)
+        result = rollout_rref_verifier_beam_sample(
+            RREFVerifierBeamConfig(
+                data_path=data_path,
+                checkpoint_dir=checkpoint_dir,
+                sample_index=sample_index,
+                max_steps=max_steps,
+                beam_width=beam_width,
+                batch_size=parsed_batch_size,
                 row_embedding_dim=row_embedding_dim,
                 col_embedding_dim=col_embedding_dim,
                 hidden_dim=hidden_dim,
@@ -882,7 +932,7 @@ def report_status() -> None:
     _emit_json(
         {
             "status": "implemented",
-            "commands": ["benchmark", "rref-certificate"],
+            "commands": ["benchmark", "rref-certificate", "v6e-profile"],
             "benchmark_report_kinds": ["rref", "hnf", "snf"],
             "benchmark_report_suite": "paper-smoke",
         }

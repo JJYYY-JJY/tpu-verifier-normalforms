@@ -216,7 +216,7 @@ def test_make_rref_state_shard_cli_rejects_missing_trace_shard() -> None:
     assert "trace shard path does not exist" in result.output
 
 
-def test_make_rref_state_shard_cli_rejects_non_npz_output(tmp_path: Path) -> None:
+def test_make_rref_state_shard_cli_rejects_unknown_output_format(tmp_path: Path) -> None:
     config_path = tmp_path / "rref_backward.yaml"
     config_path.write_text(
         "task: rref_backward_state_shards\n"
@@ -265,4 +265,4 @@ def test_make_rref_state_shard_cli_rejects_non_npz_output(tmp_path: Path) -> Non
         )
 
     assert result.exit_code != 0
-    assert "output path must end with .npz" in result.output
+    assert "data path must end with .npz or .zarr" in result.output
