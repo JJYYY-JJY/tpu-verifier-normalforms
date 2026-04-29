@@ -107,6 +107,9 @@ nf-agent data make-rref-backward-shard \
   --count 4 \
   --seed-start 0 \
   --out /tmp/rref_backward_4x4_smoke.npz
+nf-agent data make-rref-state-shard \
+  --trace-shard /tmp/rref_backward_4x4_smoke.npz \
+  --out /tmp/rref_state_4x4_smoke.npz
 nf-agent train rref-pivot \
   --data /tmp/rref_8x8_smoke.npz \
   --steps 2 \
@@ -207,8 +210,14 @@ RREF backward trace shards use `rref-backward-trace-npz-v1`: each sample starts
 from a canonical exact RREF final, applies sampled invertible row operations to
 produce an input, and stores the forward replay trace from input back to final.
 The loader validates schema, padding, pivots, operation legality, and exact
-replay. This is the v1.0-alpha1 data base for later state/action shards and
+replay. This is the v1.0-alpha1 base for the state/action expansion and later
 MatrixFormer training.
+
+RREF state/action shards use `rref-state-action-npz-v1`: exact backward traces
+are expanded into one flat `(state, action)` supervised example per row op plus
+one terminal stop example per trace. The shard also keeps trace-shaped tensors
+for replay checks. This slice is NPZ smoke only; Zarr, MatrixFormer training,
+and batched beam/search remain deferred.
 
 Check the latest local training checkpoint:
 

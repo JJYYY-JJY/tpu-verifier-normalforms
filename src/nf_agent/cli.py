@@ -17,6 +17,8 @@ from nf_agent.data.matrix_families import dense_random_matrix, sparse_random_mat
 from nf_agent.data.rref_backward_shards import SCHEMA_VERSION as RREF_BACKWARD_SCHEMA_VERSION
 from nf_agent.data.rref_backward_shards import write_rref_backward_shard
 from nf_agent.data.rref_shards import write_rref_shard
+from nf_agent.data.rref_state_shards import SCHEMA_VERSION as RREF_STATE_SCHEMA_VERSION
+from nf_agent.data.rref_state_shards import load_rref_state_shard, write_rref_state_shard
 from nf_agent.env.rref_modp import RowOp, is_rref_modp, replay_row_ops, rref_leftmost
 from nf_agent.experiments import HNFV08ExperimentConfig, run_hnf_v08_experiment
 from nf_agent.reports import BenchmarkReportConfig, build_benchmark_report
@@ -133,6 +135,27 @@ def make_rref_backward_shard(
             "out": out_path,
             "count": count,
             "seed_start": seed_start,
+        }
+    )
+
+
+@data.command("make-rref-state-shard")
+@click.option("--trace-shard", "trace_shard_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--out", "out_path", type=click.Path(dir_okay=False), required=True)
+def make_rref_state_shard(trace_shard_path: str, out_path: str) -> None:
+    try:
+        write_rref_state_shard(trace_shard_path=trace_shard_path, out_path=out_path)
+        _, metadata = load_rref_state_shard(out_path)
+    except (TypeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(
+        {
+            "status": "ok",
+            "schema_version": RREF_STATE_SCHEMA_VERSION,
+            "out": out_path,
+            "trace_count": metadata["trace_count"],
+            "flat_count": metadata["flat_count"],
+            "max_steps": metadata["max_steps"],
         }
     )
 

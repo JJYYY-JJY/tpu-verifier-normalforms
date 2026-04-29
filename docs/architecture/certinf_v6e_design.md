@@ -69,7 +69,7 @@ Existing read-only compatibility:
 
 - `rref-teacher-trajectory-npz-v0.2`
 
-Planned v6e schemas:
+Implemented v1.0-alpha1 NPZ smoke schemas:
 
 - `rref-backward-trace-npz-v1`
   - `inputs`
@@ -86,8 +86,16 @@ Planned v6e schemas:
   - `action_source`
   - `action_scalar`
   - `stop_label`
-  - `legal_masks`
+  - `legal_kind_mask`
+  - `legal_target_mask`
+  - `legal_source_mask`
+  - `legal_target_source_mask`
+  - `legal_scalar_mask`
+  - trace-shaped tensors for replay checks
   - `metadata_json`
+
+Planned v6e schemas:
+
 - Zarr equivalents for large runs. NPZ remains acceptable for small smoke
   shards.
 
@@ -113,7 +121,7 @@ Planned CLI surface:
 
 - `nf-agent profile v6e-status`
 - `nf-agent data make-rref-backward-shard` (implemented for NPZ smoke shards)
-- `nf-agent data make-rref-state-shard`
+- `nf-agent data make-rref-state-shard` (implemented for NPZ smoke shards)
 - `nf-agent train rref-matrixformer`
 - `nf-agent rollout rref-verifier-beam`
 - `nf-agent report v6e-profile`
