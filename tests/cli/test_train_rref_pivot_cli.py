@@ -17,6 +17,7 @@ def test_train_status_lists_implemented_training_commands() -> None:
     assert payload["status"] == "implemented"
     assert payload["commands"] == [
         "rref-pivot",
+        "rref-matrixformer",
         "hnf-policy",
         "hnf-dagger",
         "hnf-actor-critic",

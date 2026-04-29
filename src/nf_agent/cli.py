@@ -24,19 +24,23 @@ from nf_agent.experiments import HNFV08ExperimentConfig, run_hnf_v08_experiment
 from nf_agent.reports import BenchmarkReportConfig, build_benchmark_report
 from nf_agent.rollout import (
     HNFRolloutConfig,
+    RREFMatrixFormerRolloutConfig,
     RREFPivotRolloutConfig,
     rollout_hnf_beam_sample,
     rollout_hnf_policy_sample,
+    rollout_rref_matrixformer_sample,
     rollout_rref_pivot_sample,
 )
 from nf_agent.train import (
     HNFActorCriticConfig,
     HNFDaggerConfig,
     HNFTrainConfig,
+    RREFMatrixFormerTrainConfig,
     TrainConfig,
     train_hnf_actor_critic,
     train_hnf_dagger,
     train_hnf_policy,
+    train_rref_matrixformer,
     train_rref_pivot,
 )
 
@@ -195,6 +199,7 @@ def train_status() -> None:
             "status": "implemented",
             "commands": [
                 "rref-pivot",
+                "rref-matrixformer",
                 "hnf-policy",
                 "hnf-dagger",
                 "hnf-actor-critic",
@@ -240,6 +245,55 @@ def train_rref_pivot_cli(
                 out_dir=out_dir,
                 checkpoint_every=checkpoint_every,
                 hidden_sizes=hidden_sizes or (256, 256),
+            )
+        )
+    except (TypeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(result)
+
+
+@train.command("rref-matrixformer")
+@click.option("--data", "data_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--steps", type=int, required=True)
+@click.option("--batch-size", type=int, required=True)
+@click.option("--learning-rate", type=float, default=0.001, show_default=True)
+@click.option("--seed", type=int, default=0, show_default=True)
+@click.option("--out", "out_dir", type=click.Path(file_okay=False), required=True)
+@click.option("--checkpoint-every", type=int, default=1, show_default=True)
+@click.option("--row-embedding-dim", type=int, default=32, show_default=True)
+@click.option("--col-embedding-dim", type=int, default=32, show_default=True)
+@click.option("--hidden-dim", type=int, default=256, show_default=True)
+@click.option("--layers", type=int, default=2, show_default=True)
+@click.option("--num-heads", type=int, default=4, show_default=True)
+def train_rref_matrixformer_cli(
+    data_path: str,
+    steps: int,
+    batch_size: int,
+    learning_rate: float,
+    seed: int,
+    out_dir: str,
+    checkpoint_every: int,
+    row_embedding_dim: int,
+    col_embedding_dim: int,
+    hidden_dim: int,
+    layers: int,
+    num_heads: int,
+) -> None:
+    try:
+        result = train_rref_matrixformer(
+            RREFMatrixFormerTrainConfig(
+                data_path=data_path,
+                steps=steps,
+                batch_size=batch_size,
+                learning_rate=learning_rate,
+                seed=seed,
+                out_dir=out_dir,
+                checkpoint_every=checkpoint_every,
+                row_embedding_dim=row_embedding_dim,
+                col_embedding_dim=col_embedding_dim,
+                hidden_dim=hidden_dim,
+                layers=layers,
+                num_heads=num_heads,
             )
         )
     except (TypeError, ValueError) as exc:
