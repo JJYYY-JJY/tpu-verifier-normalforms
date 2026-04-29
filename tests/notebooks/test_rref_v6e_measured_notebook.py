@@ -71,3 +71,15 @@ def test_rref_v6e_measured_notebook_requires_python_312_and_tpu() -> None:
     assert "sys.version_info[:2] != (3, 12)" in source
     assert "expected TPU backend" in source
     assert language_info["version"] == "3.12"
+
+
+def test_rref_v6e_measured_notebook_does_not_import_jax_in_kernel() -> None:
+    notebook = _load_notebook()
+
+    for cell in notebook["cells"]:
+        if cell["cell_type"] != "code":
+            continue
+        source = cell.get("source", [])
+        lines = source if isinstance(source, list) else str(source).splitlines()
+        stripped_lines = {str(line).strip() for line in lines}
+        assert "import jax" not in stripped_lines
