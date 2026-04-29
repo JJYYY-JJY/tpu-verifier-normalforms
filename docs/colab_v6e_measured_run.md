@@ -1,8 +1,8 @@
 # Colab v6e Measured Run
 
-This runbook records large RREF 8x8/F_101 measured runs without tracking NPZ
-shards, checkpoints, raw logs, or Colab PDFs. The tracked artifacts are compact
-JSON plus Markdown summaries under `results/measured/`.
+This runbook records measured RREF runs without tracking NPZ/Zarr shards,
+checkpoints, raw logs, or Colab PDFs. The tracked artifacts are compact JSON
+plus Markdown summaries under `results/measured/`.
 
 For Colab, open `notebooks/rref_v6e_measured_run.ipynb`. It clones the repo,
 installs the package, asserts TPU backend, runs the measured profile, displays a
@@ -83,3 +83,20 @@ The smoke output should contain `schema_version: rref-measured-run-v1`, backend
 metadata, batch calibration records, train metrics, compact policy aggregates,
 and the no-fallback statement. It must not contain matrices, row operations,
 checkpoints, or raw logs.
+
+## v1.0-beta1 MatrixFormer/Zarr Smoke
+
+Use this for the RREF verifier-beam surface:
+
+```bash
+source .venv/bin/activate
+python scripts/rref_v6e_profile.py \
+  --config configs/v6e1/rref_matrixformer_smoke.yaml \
+  --work-dir /tmp/nf-v6e1/rref_matrixformer_smoke/work \
+  --out-dir /tmp/nf-v6e1/rref_matrixformer_smoke/report
+```
+
+The output should contain `schema_version: rref-v6e-profile-v1`, Zarr schema
+versions, finite MatrixFormer train loss, verifier-beam status, CPU exact replay
+status, backend/profile metadata, and the no-fallback statement. It must not
+contain matrices, operation traces, checkpoints, or raw logs.

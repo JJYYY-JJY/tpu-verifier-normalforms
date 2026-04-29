@@ -69,7 +69,7 @@ Existing read-only compatibility:
 
 - `rref-teacher-trajectory-npz-v0.2`
 
-Implemented v1.0-alpha1 NPZ smoke schemas:
+Implemented v1.0-beta1 RREF smoke schemas:
 
 - `rref-backward-trace-npz-v1`
   - `inputs`
@@ -94,10 +94,11 @@ Implemented v1.0-alpha1 NPZ smoke schemas:
   - trace-shaped tensors for replay checks
   - `metadata_json`
 
-Planned v6e schemas:
+Implemented storage formats:
 
-- Zarr equivalents for large runs. NPZ remains acceptable for small smoke
-  shards.
+- `.npz` eager arrays for small local smoke and fixtures;
+- `.zarr` chunked arrays with the same array names and schema metadata for
+  larger RREF backward/state-action shards.
 
 HNF and SNF follow the same split:
 
@@ -117,15 +118,16 @@ Replace whole-trace `PivotMLP` imitation and per-sample host rollout with:
 - CPU exact replay and verifier acceptance;
 - compact `v6e-profile` reports.
 
-Planned CLI surface:
+Implemented v1.0-beta1 CLI/script surface:
 
 - `nf-agent profile v6e-status`
-- `nf-agent data make-rref-backward-shard` (implemented for NPZ smoke shards)
-- `nf-agent data make-rref-state-shard` (implemented for NPZ smoke shards)
-- `nf-agent train rref-matrixformer` (implemented for NPZ smoke shards)
-- `nf-agent rollout rref-matrixformer` (implemented as local greedy NPZ smoke)
-- `nf-agent rollout rref-verifier-beam` (deferred TPU batched beam)
+- `nf-agent data make-rref-backward-shard` for `.npz` or `.zarr`
+- `nf-agent data make-rref-state-shard` for `.npz` or `.zarr`
+- `nf-agent train rref-matrixformer`
+- `nf-agent rollout rref-matrixformer` as greedy local smoke
+- `nf-agent rollout rref-verifier-beam` with exact CPU replay/search acceptance
 - `nf-agent report v6e-profile`
+- `python scripts/rref_v6e_profile.py`
 
 ## HNF v1.1 Mainline
 

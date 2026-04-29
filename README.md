@@ -14,11 +14,13 @@ See:
 - `docs/benchmarks/v6e1_protocol.md`
 - `configs/v6e1/`
 
-## Current Baseline: v0.9
+## Current Baseline: v1.0-beta1
 
-The current baseline is the verifier-first RREF/HNF/SNF stack with compact
-benchmark reporting and measured RREF 8x8/F_101 runs on Apple M4 CPU and Colab
-v6e-1 TPU. See `docs/v0.9_closure.md` and `results/measured/`.
+The current baseline is the verifier-first RREF/HNF/SNF stack plus the RREF
+v1.0-beta1 MatrixFormer/Zarr/verifier-beam profile surface. Local CPU smoke is
+implemented; real TPU v6e success is a remote acceptance gate. See
+`docs/v0.9_closure.md`, `docs/benchmarks/v6e1_protocol.md`, and
+`results/measured/`.
 
 Known v6e bottleneck: the tracked `colab-v6e1-large` run is not a saturation
 workload. TPU training is faster than Apple M4 by the harness proxy, but
@@ -97,6 +99,8 @@ pytest
 nf-agent --help
 nf-agent train status
 nf-agent report status
+nf-agent profile v6e-status \
+  --memory-profile /tmp/nf-v6e1/profile.json
 nf-agent data make-rref-shard \
   --config configs/rref_8x8_mod101.yaml \
   --count 4 \
@@ -132,6 +136,42 @@ nf-agent rollout rref-matrixformer \
   --hidden-dim 32 \
   --layers 1 \
   --num-heads 1
+nf-agent data make-rref-backward-shard \
+  --config configs/rref_backward_4x4_mod101.yaml \
+  --count 4 \
+  --seed-start 0 \
+  --out /tmp/rref_backward_4x4_smoke.zarr
+nf-agent data make-rref-state-shard \
+  --trace-shard /tmp/rref_backward_4x4_smoke.zarr \
+  --out /tmp/rref_state_4x4_smoke.zarr
+nf-agent train rref-matrixformer \
+  --data /tmp/rref_state_4x4_smoke.zarr \
+  --steps 2 \
+  --batch-size 4 \
+  --learning-rate 0.001 \
+  --seed 0 \
+  --out /tmp/rref_matrixformer_zarr_ckpt \
+  --row-embedding-dim 8 \
+  --col-embedding-dim 8 \
+  --hidden-dim 32 \
+  --layers 1 \
+  --num-heads 1
+nf-agent rollout rref-verifier-beam \
+  --data /tmp/rref_state_4x4_smoke.zarr \
+  --checkpoint /tmp/rref_matrixformer_zarr_ckpt \
+  --sample-index 0 \
+  --max-steps 8 \
+  --beam-width 4 \
+  --batch-size auto \
+  --row-embedding-dim 8 \
+  --col-embedding-dim 8 \
+  --hidden-dim 32 \
+  --layers 1 \
+  --num-heads 1
+python scripts/rref_v6e_profile.py \
+  --config configs/v6e1/rref_matrixformer_smoke.yaml \
+  --work-dir /tmp/nf-v6e1/rref_matrixformer_smoke/work \
+  --out-dir /tmp/nf-v6e1/rref_matrixformer_smoke/report
 nf-agent train rref-pivot \
   --data /tmp/rref_8x8_smoke.npz \
   --steps 2 \
@@ -223,9 +263,10 @@ with np.load("/tmp/rref_8x8_smoke.npz", allow_pickle=False) as shard:
 PY
 ```
 
-See `docs/trajectory_shards.md` for the fixed NPZ schemas. RREF shards support
-teachers (`leftmost`, `min_fill`). HNF shards use `row_hnf` as an explicit
-oracle/dataset source and encode integer row operations over a shard-local
+See `docs/trajectory_shards.md` for the fixed NPZ schemas; RREF backward and
+state/action shards also support Zarr storage with the same arrays and metadata.
+RREF shards support teachers (`leftmost`, `min_fill`). HNF shards use `row_hnf`
+as an explicit oracle/dataset source and encode integer row operations over a shard-local
 scalar vocabulary.
 
 RREF backward trace shards use `rref-backward-trace-npz-v1`: each sample starts

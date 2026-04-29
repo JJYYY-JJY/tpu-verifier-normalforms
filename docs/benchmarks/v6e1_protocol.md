@@ -1,8 +1,8 @@
 # v6e-1 Benchmark Protocol
 
 This protocol defines how CertiNF-v6e runs are measured on Colab v6e-1 and
-similar single-host TPU environments. It is a protocol for future v1.x runs;
-the current measured baseline is documented in `docs/v0.9_closure.md`.
+similar single-host TPU environments. The RREF v1.0-beta1 local surface is
+implemented; TPU saturation remains a remote acceptance gate.
 
 ## Required Profile Metadata
 
@@ -23,7 +23,7 @@ Every v6e profile report must include:
 - memory or XProf artifact path when collected;
 - no-fallback statement.
 
-The planned status command is:
+Status command:
 
 ```bash
 nf-agent profile v6e-status --memory-profile /tmp/nf-v6e1/profile.json
@@ -72,16 +72,36 @@ not belong in report summaries.
 Local smoke:
 
 - 16x16 over `F_101`;
+- Zarr backward and state/action shards;
 - train 10 steps;
 - loss is finite;
-- checkpoint can be loaded by `rollout rref-matrixformer`;
-- rollout emits compact JSON with explicit success/failure status.
+- checkpoint can be loaded by `rollout rref-verifier-beam`;
+- beam rollout emits explicit `success` or `max_steps_exceeded`;
+- CPU exact replay/verifier fields are recorded in the compact profile.
+
+Local command:
+
+```bash
+python scripts/rref_v6e_profile.py \
+  --config configs/v6e1/rref_matrixformer_smoke.yaml \
+  --work-dir /tmp/nf-v6e1/rref_matrixformer_smoke/work \
+  --out-dir /tmp/nf-v6e1/rref_matrixformer_smoke/report
+```
 
 Colab v6e smoke:
 
 - 32x32 over `F_1009`;
 - batch size `auto`;
 - compile, train, beam/search, CPU verifier, and report stages complete.
+
+Remote command:
+
+```bash
+python scripts/rref_v6e_profile.py \
+  --config configs/v6e1/rref_large_profile.yaml \
+  --work-dir /tmp/nf-v6e1/rref_large/work \
+  --out-dir /tmp/nf-v6e1/rref_large/report
+```
 
 Measured v6e profile:
 
