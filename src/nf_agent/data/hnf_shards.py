@@ -111,6 +111,10 @@ class HNFBackwardShardConfig:
     families: tuple[HNFBackwardFamilyConfig, ...]
     storage_format: Literal["npz", "zarr"]
     require_unimodular_ops: bool = True
+    search_mode: Literal["exact_row_preconditioned"] | None = None
+    search_candidate_limit: int | None = None
+    search_objective: tuple[str, ...] = ()
+    rollout_beam_size: int | None = None
 
     def family_config(self, name: str) -> HNFBackwardFamilyConfig:
         for family in self.families:
@@ -245,11 +249,52 @@ def load_hnf_backward_shard_config(config_path: str | Path) -> HNFBackwardShardC
     if backward_trace.get("require_exact_replay") is False:
         raise ValueError("backward_trace.require_exact_replay must not be false")
 
+    search_mode: Literal["exact_row_preconditioned"] | None = None
+    search_candidate_limit: int | None = None
+    search_objective: tuple[str, ...] = ()
+    raw_search = raw.get("search")
+    if raw_search is not None:
+        search = _require_mapping(raw_search, "search")
+        mode = search.get("mode")
+        if mode is not None:
+            if mode != "exact_row_preconditioned":
+                raise ValueError("search.mode must be 'exact_row_preconditioned'")
+            search_mode = "exact_row_preconditioned"
+        if search.get("candidate_limit") is not None:
+            search_candidate_limit = _require_positive_int(
+                search.get("candidate_limit"),
+                "search.candidate_limit",
+            )
+        objective = search.get("objective", ())
+        if objective is not None:
+            if not isinstance(objective, Sequence) or isinstance(objective, str | bytes):
+                raise ValueError("search.objective must be a sequence")
+            objective_values: list[str] = []
+            for index, value in enumerate(objective):
+                if not isinstance(value, str) or not value:
+                    raise ValueError(f"search.objective[{index}] must be a nonempty string")
+                objective_values.append(value)
+            search_objective = tuple(objective_values)
+
+    rollout_beam_size: int | None = None
+    raw_rollout = raw.get("rollout")
+    if raw_rollout is not None:
+        rollout = _require_mapping(raw_rollout, "rollout")
+        if rollout.get("beam_size") is not None:
+            rollout_beam_size = _require_positive_int(
+                rollout.get("beam_size"),
+                "rollout.beam_size",
+            )
+
     return HNFBackwardShardConfig(
         task="hnf_growth_search",
         families=tuple(families),
         storage_format=cast(Literal["npz", "zarr"], output_format),
         require_unimodular_ops=True,
+        search_mode=search_mode,
+        search_candidate_limit=search_candidate_limit,
+        search_objective=search_objective,
+        rollout_beam_size=rollout_beam_size,
     )
 
 
