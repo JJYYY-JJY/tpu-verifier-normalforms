@@ -9,6 +9,21 @@ from nf_agent.data.rref_shards import write_rref_shard
 CONFIG = Path("configs/rref_8x8_mod101.yaml").resolve()
 
 
+def test_train_status_lists_implemented_training_commands() -> None:
+    result = CliRunner().invoke(main, ["train", "status"])
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["status"] == "implemented"
+    assert payload["commands"] == [
+        "rref-pivot",
+        "hnf-policy",
+        "hnf-dagger",
+        "hnf-actor-critic",
+    ]
+    assert payload["families"] == ["rref", "hnf"]
+
+
 def test_train_rref_pivot_cli_runs_and_emits_json(tmp_path: Path) -> None:
     shard_path = tmp_path / "rref_cli.npz"
     write_rref_shard(config_path=CONFIG, count=8, seed_start=0, out_path=shard_path)

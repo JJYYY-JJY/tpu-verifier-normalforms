@@ -129,7 +129,18 @@ def train() -> None:
 
 @train.command("status")
 def train_status() -> None:
-    _emit_json({"status": "not_implemented", "reason": "v0.2 roadmap"})
+    _emit_json(
+        {
+            "status": "implemented",
+            "commands": [
+                "rref-pivot",
+                "hnf-policy",
+                "hnf-dagger",
+                "hnf-actor-critic",
+            ],
+            "families": ["rref", "hnf"],
+        }
+    )
 
 
 @train.command("rref-pivot")
