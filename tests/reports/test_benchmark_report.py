@@ -22,7 +22,7 @@ def test_benchmark_report_renderer_writes_required_sections_rows_and_plots(
 
     assert result["status"] == "ok"
     report_text = (tmp_path / "report" / "report.md").read_text()
-    assert "# v0.7 Benchmark Report" in report_text
+    assert "# v0.8 Benchmark Report" in report_text
     assert "## Provenance" in report_text
     assert "## Exactness and Fallback Policy" in report_text
     assert "failed neural rollouts remain failures" in report_text

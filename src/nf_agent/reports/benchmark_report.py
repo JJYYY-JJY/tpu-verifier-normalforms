@@ -215,8 +215,13 @@ def _looks_like_hnf_benchmark(payload: Mapping[str, Any]) -> bool:
     return (
         payload.get("status") == "ok"
         and payload.get("family") == "sparse_integer"
-        and isinstance(payload.get("aggregate"), dict)
-        and isinstance(payload.get("samples"), list)
+        and (
+            isinstance(payload.get("policies"), dict)
+            or (
+                isinstance(payload.get("aggregate"), dict)
+                and isinstance(payload.get("samples"), list)
+            )
+        )
     )
 
 
@@ -229,6 +234,17 @@ def _validate_compact_entry(entry: BenchmarkEntry) -> None:
 
 def _sample_records(entry: BenchmarkEntry) -> list[JsonDict]:
     if entry.kind == "hnf":
+        policies = entry.payload.get("policies")
+        if isinstance(policies, dict):
+            hnf_records: list[JsonDict] = []
+            for policy_name, policy_value in policies.items():
+                policy = _as_dict(policy_value, f"{entry.label}.policies.{policy_name}")
+                samples = _required_list(policy, "samples", f"{entry.label}.{policy_name}")
+                hnf_records.extend(
+                    _as_dict(sample, f"{entry.label}.{policy_name}.samples[]")
+                    for sample in samples
+                )
+            return hnf_records
         samples = _required_list(entry.payload, "samples", entry.label)
         return [_as_dict(sample, f"{entry.label}.samples[]") for sample in samples]
 
@@ -362,6 +378,12 @@ def _suite_rows(entries: Sequence[BenchmarkEntry]) -> list[JsonDict]:
                 }
             )
         else:
+            hnf_policies = entry.payload.get("policies")
+            policy_names = (
+                sorted(str(key) for key in hnf_policies)
+                if isinstance(hnf_policies, dict)
+                else ["row_hnf"]
+            )
             rows.append(
                 {
                     "benchmark": entry.label,
@@ -371,7 +393,7 @@ def _suite_rows(entries: Sequence[BenchmarkEntry]) -> list[JsonDict]:
                     "shape": f"{payload.get('rows', '?')}x{payload.get('cols', '?')}",
                     "samples": _int(payload.get("count", 0)),
                     "modulus": "",
-                    "policies": "row_hnf",
+                    "policies": ", ".join(policy_names),
                 }
             )
     return rows
@@ -383,7 +405,7 @@ def _normalized_rows(entries: Sequence[BenchmarkEntry]) -> list[JsonDict]:
         if entry.kind == "rref":
             rows.extend(_normalized_rref_rows(entry))
         else:
-            rows.append(_normalized_hnf_row(entry))
+            rows.extend(_normalized_hnf_rows(entry))
     return rows
 
 
@@ -416,21 +438,38 @@ def _normalized_rref_rows(entry: BenchmarkEntry) -> list[JsonDict]:
     return rows
 
 
-def _normalized_hnf_row(entry: BenchmarkEntry) -> JsonDict:
+def _normalized_hnf_rows(entry: BenchmarkEntry) -> list[JsonDict]:
+    policies = entry.payload.get("policies")
+    if isinstance(policies, dict):
+        rows: list[JsonDict] = []
+        for policy_name, policy_value in policies.items():
+            policy = _as_dict(policy_value, f"{entry.label}.policies.{policy_name}")
+            rows.append(_normalized_hnf_row(entry, str(policy_name), policy))
+        return rows
+    return [_normalized_hnf_row(entry, "row_hnf", entry.payload)]
+
+
+def _normalized_hnf_row(
+    entry: BenchmarkEntry,
+    policy_name: str,
+    policy_payload: Mapping[str, Any],
+) -> JsonDict:
     payload = entry.payload
-    aggregate = _required_dict(payload, "aggregate", entry.label)
+    aggregate = _required_dict(policy_payload, "aggregate", f"{entry.label}.{policy_name}")
     row = _base_normalized_row(
         entry=entry,
-        policy="row_hnf",
+        policy=policy_name,
         aggregate=aggregate,
         source=_string(payload.get("source", "unknown")),
         family=_string(payload.get("family", "unknown")),
     )
     row["modulus"] = ""
-    row["mean_step_or_trace_length"] = _float(aggregate.get("mean_trace_length", 0.0))
+    row["mean_step_or_trace_length"] = _float(
+        aggregate.get("mean_step_count", aggregate.get("mean_trace_length", 0.0))
+    )
     row["mean_rank"] = ""
-    row["mean_invalid_action_count"] = ""
-    row["mean_masked_action_count"] = ""
+    row["mean_invalid_action_count"] = _float(aggregate.get("mean_invalid_action_count", 0.0))
+    row["mean_masked_action_count"] = _float(aggregate.get("mean_masked_action_count", 0.0))
     return row
 
 
@@ -465,19 +504,28 @@ def _hnf_coefficient_rows(entries: Sequence[BenchmarkEntry]) -> list[JsonDict]:
     for entry in entries:
         if entry.kind != "hnf":
             continue
-        aggregate = _required_dict(entry.payload, "aggregate", entry.label)
-        rows.append(
-            {
-                "benchmark": entry.label,
-                "initial_max_abs": _int(aggregate.get("max_initial_max_abs", 0)),
-                "max_abs_seen": _int(aggregate.get("max_max_abs_seen", 0)),
-                "initial_bitlength": _int(aggregate.get("max_initial_bitlength", 0)),
-                "max_bitlength": _int(aggregate.get("max_max_bitlength", 0)),
-                "growth_numerator": _int(aggregate.get("max_growth_numerator", 0)),
-                "growth_denominator": _int(aggregate.get("max_growth_denominator", 0)),
-                "step_count": _int(aggregate.get("max_step_count", 0)),
-            }
-        )
+        policies = entry.payload.get("policies")
+        if isinstance(policies, dict):
+            items = [
+                (str(policy_name), _as_dict(policy, f"{entry.label}.{policy_name}"))
+                for policy_name, policy in policies.items()
+            ]
+        else:
+            items = [("row_hnf", entry.payload)]
+        for policy_name, policy in items:
+            aggregate = _required_dict(policy, "aggregate", f"{entry.label}.{policy_name}")
+            rows.append(
+                {
+                    "benchmark": f"{entry.label}:{policy_name}",
+                    "initial_max_abs": _int(aggregate.get("max_initial_max_abs", 0)),
+                    "max_abs_seen": _int(aggregate.get("max_max_abs_seen", 0)),
+                    "initial_bitlength": _int(aggregate.get("max_initial_bitlength", 0)),
+                    "max_bitlength": _int(aggregate.get("max_max_bitlength", 0)),
+                    "growth_numerator": _int(aggregate.get("max_growth_numerator", 0)),
+                    "growth_denominator": _int(aggregate.get("max_growth_denominator", 0)),
+                    "step_count": _int(aggregate.get("max_step_count", 0)),
+                }
+            )
     return rows
 
 
@@ -523,7 +571,12 @@ def _write_plots(
         "max_bitlength",
     )
 
-    neural_rows = [row for row in normalized_rows if row.get("policy") == "neural"]
+    neural_rows = [
+        row
+        for row in normalized_rows
+        if row.get("policy")
+        in {"neural", "supervised_greedy", "dagger_greedy", "actor_critic_greedy", "beam"}
+    ]
     if neural_rows:
         plots["neural_invalid_actions"] = "plots/neural_invalid_actions.png"
         _save_bar_plot(
@@ -620,7 +673,7 @@ def _render_markdown(
 
     return "\n".join(
         [
-            "# v0.7 Benchmark Report",
+            "# v0.8 Benchmark Report",
             "",
             "## Provenance",
             "",
@@ -712,7 +765,7 @@ def _render_markdown(
             "",
             "- `paper-smoke` is a local reproducibility suite, not a publication-scale run.",
             "- Timing values are local wall-clock measurements with no warmup or repeat protocol.",
-            "- SNF benchmark and report coverage is out of scope for v0.7.",
+            "- SNF benchmark and report coverage is out of scope for v0.8.",
             "- Full matrices and row-operation traces are intentionally omitted from samples.",
             "",
         ]
