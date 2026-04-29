@@ -60,5 +60,5 @@ Still out of scope:
 
 - TPU-specific setup libraries or TPU-only notebook cells.
 - Hidden deterministic fallback in rollout code remains prohibited.
-- HNF/SNF rollout expansion and Lean checker expansion remain separate roadmap
-  items.
+- HNF/SNF rollout expansion remains separate roadmap work; the Lean checker now
+  covers RREF and SNF JSON certificates.

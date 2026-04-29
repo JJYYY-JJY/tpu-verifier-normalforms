@@ -8,7 +8,7 @@
 4. Models: masked policies that score legal pivot or operation actions.
 5. Training: imitation learning and later verifier-guided fine-tuning.
 6. Rollout: neural proposals checked step-by-step with no hidden fallback.
-7. Certificates: portable traces replayable by Python and future Lean checkers.
+7. Certificates: portable traces replayable by Python and Lean checkers.
 
 The first implemented environment is RREF over `F_p`, with `F_101` as the smoke
 configuration.
@@ -43,5 +43,8 @@ benchmark policies never call the oracle.
 SNF certificate replay is implemented in Python for schema-valid certificates:
 row operations replay first, column operations replay second, recorded
 transforms are checked against identity replay, and `U * input * V = D` is
-verified with exact integer arithmetic. Lean checker expansion remains a future
-slice.
+verified with exact integer arithmetic. The v0.6 Lean checker also accepts SNF
+JSON certificates as checker-only evidence: it parses required fields, replays
+row and column operations over exact integers, validates recorded transforms,
+verifies `U * input * V = D`, and checks rectangular SNF diagonal form. Python
+remains the strict JSON schema authority.
