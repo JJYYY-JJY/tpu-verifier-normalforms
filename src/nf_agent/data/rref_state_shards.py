@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, TypeAlias, cast
 
 import numpy as np
+from grain import MapDataset  # type: ignore[import-untyped]
 
 from nf_agent.data.rref_backward_shards import (
     SCHEMA_VERSION as BACKWARD_SCHEMA_VERSION,
@@ -680,3 +681,19 @@ class RREFStateActionSamples:
             ),
             "legal_scalar_mask": self._arrays["legal_scalar_mask"][index].astype(np.bool_),
         }
+
+
+def make_rref_state_action_grain_dataset(
+    path: str | Path,
+    batch_size: int,
+    seed: int,
+    *,
+    drop_remainder: bool = False,
+) -> MapDataset:
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+    samples = RREFStateActionSamples(path)
+    return MapDataset.source(samples).shuffle(seed).batch(
+        batch_size,
+        drop_remainder=drop_remainder,
+    )

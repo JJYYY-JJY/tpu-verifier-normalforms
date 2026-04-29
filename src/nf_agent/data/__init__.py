@@ -21,6 +21,7 @@ from nf_agent.data.rref_state_shards import (
     RREFStateActionSamples,
     generate_rref_state_shard,
     load_rref_state_shard,
+    make_rref_state_action_grain_dataset,
     write_rref_state_shard,
 )
 
@@ -37,6 +38,7 @@ __all__ = [
     "load_rref_shard_config",
     "load_rref_state_shard",
     "make_rref_grain_dataset",
+    "make_rref_state_action_grain_dataset",
     "row_ops_from_backward_shard_arrays",
     "row_ops_from_shard_arrays",
     "write_rref_backward_shard",
