@@ -13,6 +13,7 @@ from nf_agent.benchmarks.rref_benchmark import BenchmarkSource, MatrixFamily
 from nf_agent.data.matrix_families import dense_random_matrix, sparse_random_matrix
 from nf_agent.data.rref_shards import write_rref_shard
 from nf_agent.env.rref_modp import RowOp, is_rref_modp, replay_row_ops, rref_leftmost
+from nf_agent.reports import BenchmarkReportConfig, build_benchmark_report
 from nf_agent.rollout import RREFPivotRolloutConfig, rollout_rref_pivot_sample
 from nf_agent.train import TrainConfig, train_rref_pivot
 
@@ -306,7 +307,64 @@ def report() -> None:
 
 @report.command("status")
 def report_status() -> None:
-    _emit_json({"status": "not_implemented", "reason": "v0.7 roadmap"})
+    _emit_json({"status": "implemented", "commands": ["benchmark", "rref-certificate"]})
+
+
+@report.command("benchmark")
+@click.option("--out-dir", type=click.Path(file_okay=False), required=True)
+@click.option(
+    "--input-json",
+    "input_json_paths",
+    type=click.Path(exists=True, dir_okay=False),
+    multiple=True,
+)
+@click.option("--suite", type=str, default="paper-smoke", show_default=True)
+@click.option("--sample-count", type=int, default=16, show_default=True)
+@click.option("--rows", type=int, default=8, show_default=True)
+@click.option("--cols", type=int, default=8, show_default=True)
+@click.option("--p", "modulus", type=int, default=101, show_default=True)
+@click.option("--seed-start", type=int, default=0, show_default=True)
+@click.option("--sparse-density", type=float, default=0.2, show_default=True)
+@click.option("--low-rank", type=int, default=3, show_default=True)
+@click.option("--hnf-entry-bound", type=int, default=9, show_default=True)
+@click.option("--rref-checkpoint", type=click.Path(file_okay=False), default=None)
+@click.option("--rref-model-data", type=click.Path(dir_okay=False), default=None)
+def report_benchmark(
+    out_dir: str,
+    input_json_paths: tuple[str, ...],
+    suite: str,
+    sample_count: int,
+    rows: int,
+    cols: int,
+    modulus: int,
+    seed_start: int,
+    sparse_density: float,
+    low_rank: int,
+    hnf_entry_bound: int,
+    rref_checkpoint: str | None,
+    rref_model_data: str | None,
+) -> None:
+    try:
+        result = build_benchmark_report(
+            BenchmarkReportConfig(
+                out_dir=out_dir,
+                input_json_paths=input_json_paths,
+                suite=suite,
+                sample_count=sample_count,
+                rows=rows,
+                cols=cols,
+                modulus=modulus,
+                seed_start=seed_start,
+                sparse_density=sparse_density,
+                low_rank=low_rank,
+                hnf_entry_bound=hnf_entry_bound,
+                rref_checkpoint=rref_checkpoint,
+                rref_model_data=rref_model_data,
+            )
+        )
+    except (OSError, TypeError, ValueError, IndexError, ZeroDivisionError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(result)
 
 
 @report.command("rref-certificate")
