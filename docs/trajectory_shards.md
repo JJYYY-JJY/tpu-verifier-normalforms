@@ -52,6 +52,55 @@ seed range, matrix shape, op encoding, and padding value.
 - Shards are produced with `numpy.savez`, not compressed.
 - Generated `.npz` files under `results/data/` are ignored by git.
 
+## RREF Backward Trace NPZ Schema
+
+Use:
+
+```bash
+nf-agent data make-rref-backward-shard \
+  --config configs/rref_backward_4x4_mod101.yaml \
+  --count 1024 \
+  --seed-start 0 \
+  --out results/data/rref_backward_4x4_mod101_seed0_count1024.npz
+```
+
+Schema version: `rref-backward-trace-npz-v1`.
+
+Generation:
+
+```text
+deterministic source matrix
+-> exact leftmost RREF final
+-> sampled invertible row ops applied backward from final
+-> input matrix
+-> inverse row-op trace stored for input -> final replay
+```
+
+Arrays:
+
+- `inputs`: `int64[N, rows, cols]`
+- `finals`: `int64[N, rows, cols]`
+- `pivots`: `int64[N, min(rows, cols), 2]`, padded with `[-1, -1]`
+- `ops`: `int64[N, max_ops, 4]`, columns `[kind, target, source, scalar]`
+- `op_mask`: `bool[N, max_ops]`
+- `metadata_json`: JSON string
+
+`ops[:, :, 0]` uses the same row-op kind encoding as v0.2:
+
+- `0`: padding
+- `1`: row swap
+- `2`: row scale
+- `3`: add row multiple
+
+Inactive op rows must be `[0, -1, -1, -1]`. Active `swap` and `add` operations
+must have distinct target/source rows. Active `scale` and `add` scalars must be
+nonzero modulo `p`. The loader checks prime modulus, dtypes, shapes, padding,
+operation legality, pivots derived from `finals`, exact replay from `inputs` to
+`finals`, and `is_rref_modp(finals[i], p)`.
+
+Current executable format is NPZ only. Zarr is reserved for later large v6e
+state/action datasets.
+
 ## HNF NPZ Schema
 
 Use:

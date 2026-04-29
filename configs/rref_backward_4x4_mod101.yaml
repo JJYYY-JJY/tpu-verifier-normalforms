@@ -1,0 +1,12 @@
+task: rref_backward_state_shards
+field:
+  modulus: 101
+matrix:
+  family: dense
+  rows: 4
+  cols: 4
+backward_trace:
+  schema: rref-backward-trace-npz-v1
+  format: npz
+  max_backward_ops: 8
+  require_exact_replay: true

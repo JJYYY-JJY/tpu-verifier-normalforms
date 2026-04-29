@@ -14,6 +14,8 @@ from nf_agent.benchmarks import (
 from nf_agent.benchmarks.rref_benchmark import BenchmarkSource, MatrixFamily
 from nf_agent.data.hnf_shards import write_hnf_shard
 from nf_agent.data.matrix_families import dense_random_matrix, sparse_random_matrix
+from nf_agent.data.rref_backward_shards import SCHEMA_VERSION as RREF_BACKWARD_SCHEMA_VERSION
+from nf_agent.data.rref_backward_shards import write_rref_backward_shard
 from nf_agent.data.rref_shards import write_rref_shard
 from nf_agent.env.rref_modp import RowOp, is_rref_modp, replay_row_ops, rref_leftmost
 from nf_agent.experiments import HNFV08ExperimentConfig, run_hnf_v08_experiment
@@ -97,6 +99,42 @@ def make_rref_shard(config_path: str, count: int, seed_start: int, out_path: str
     except (TypeError, ValueError) as exc:
         raise click.ClickException(str(exc)) from exc
     _emit_json({"status": "ok", "out": out_path, "count": count, "seed_start": seed_start})
+
+
+@data.command("make-rref-backward-shard")
+@click.option(
+    "--config",
+    "config_path",
+    type=click.Path(exists=True, dir_okay=False),
+    required=True,
+)
+@click.option("--count", type=int, required=True)
+@click.option("--seed-start", type=int, default=0, show_default=True)
+@click.option("--out", "out_path", type=click.Path(dir_okay=False), required=True)
+def make_rref_backward_shard(
+    config_path: str,
+    count: int,
+    seed_start: int,
+    out_path: str,
+) -> None:
+    try:
+        write_rref_backward_shard(
+            config_path=config_path,
+            count=count,
+            seed_start=seed_start,
+            out_path=out_path,
+        )
+    except (TypeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(
+        {
+            "status": "ok",
+            "schema_version": RREF_BACKWARD_SCHEMA_VERSION,
+            "out": out_path,
+            "count": count,
+            "seed_start": seed_start,
+        }
+    )
 
 
 @data.command("make-hnf-shard")

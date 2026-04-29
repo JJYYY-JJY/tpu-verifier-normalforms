@@ -102,6 +102,11 @@ nf-agent data make-rref-shard \
   --count 4 \
   --seed-start 0 \
   --out /tmp/rref_8x8_smoke.npz
+nf-agent data make-rref-backward-shard \
+  --config configs/rref_backward_4x4_mod101.yaml \
+  --count 4 \
+  --seed-start 0 \
+  --out /tmp/rref_backward_4x4_smoke.npz
 nf-agent train rref-pivot \
   --data /tmp/rref_8x8_smoke.npz \
   --steps 2 \
@@ -197,6 +202,13 @@ See `docs/trajectory_shards.md` for the fixed NPZ schemas. RREF shards support
 teachers (`leftmost`, `min_fill`). HNF shards use `row_hnf` as an explicit
 oracle/dataset source and encode integer row operations over a shard-local
 scalar vocabulary.
+
+RREF backward trace shards use `rref-backward-trace-npz-v1`: each sample starts
+from a canonical exact RREF final, applies sampled invertible row operations to
+produce an input, and stores the forward replay trace from input back to final.
+The loader validates schema, padding, pivots, operation legality, and exact
+replay. This is the v1.0-alpha1 data base for later state/action shards and
+MatrixFormer training.
 
 Check the latest local training checkpoint:
 

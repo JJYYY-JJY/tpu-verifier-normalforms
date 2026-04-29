@@ -112,7 +112,7 @@ Replace whole-trace `PivotMLP` imitation and per-sample host rollout with:
 Planned CLI surface:
 
 - `nf-agent profile v6e-status`
-- `nf-agent data make-rref-backward-shard`
+- `nf-agent data make-rref-backward-shard` (implemented for NPZ smoke shards)
 - `nf-agent data make-rref-state-shard`
 - `nf-agent train rref-matrixformer`
 - `nf-agent rollout rref-verifier-beam`
