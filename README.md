@@ -132,6 +132,26 @@ nf-agent report rref-certificate \
 cd lean && lake build
 ```
 
+## Pre-Colab Local Freeze
+
+Before using the v6e notebook, run the local preflight:
+
+```bash
+source .venv/bin/activate
+python scripts/pre_colab_preflight.py \
+  --work-dir /tmp/nf-pre-colab \
+  --fixture-dir tests/fixtures/pre_colab \
+  --write-fixtures
+```
+
+It runs the RREF shard -> short train -> neural rollout -> shard benchmark
+chain with the same `--hidden-size 32` contract as the notebook, then runs the
+HNF v0.8 mini experiment, SNF generated-certificate benchmark, v0.9 report
+smoke, and Lean checker build. Heavy artifacts stay in `/tmp`; tracked fixtures
+under `tests/fixtures/pre_colab/` are compact JSON only. See
+`docs/pre_colab_preflight.md` for verdict semantics and acceptable HNF
+`failed_threshold` handling.
+
 The status commands are informational and do not run training, benchmarks,
 report generation, or checker builds. `nf-agent train status` lists the
 implemented RREF/HNF training command surface; `nf-agent report status` lists
