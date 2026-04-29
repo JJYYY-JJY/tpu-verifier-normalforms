@@ -49,8 +49,8 @@ diagonal form. Python remains the strict JSON schema authority.
 ## Install
 
 ```bash
-uv python install 3.11
-uv venv --python 3.11 .venv
+uv python install 3.12.13
+uv venv --python 3.12.13 .venv
 source .venv/bin/activate
 python -m pip install -U pip
 python -m pip install -r requirements-dev.txt -e .
