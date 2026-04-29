@@ -29,10 +29,13 @@ plus row/column operation traces. It validates the JSON-compatible schema,
 replays row ops then column ops, checks recorded transforms against identity
 replay, and verifies `U * input * V = D` using exact integer arithmetic.
 
-The v0.6 Lean checker currently covers small RREF JSON certificates over prime
-finite fields. It parses JSON directly, replays `swap`/`scale`/`add` row ops,
-checks the final RREF, and requires the supplied pivot list to match the pivots
-derived from the final matrix. SNF Lean checking remains a follow-up slice.
+The v0.6 Lean checker covers small RREF JSON certificates over prime finite
+fields and SNF JSON certificates over exact integers. RREF parsing replays
+`swap`/`scale`/`add` row ops, checks the final RREF, and requires the supplied
+pivot list to match the pivots derived from the final matrix. SNF parsing checks
+required fields, replays `swap`/`negate`/`add` row and column ops, checks the
+recorded transforms, verifies `U * input * V = D`, and enforces rectangular SNF
+diagonal form. Python remains the strict JSON schema authority.
 
 ## Correctness Model
 
@@ -216,8 +219,8 @@ threshold verdict comparing `dagger_actor_critic_beam` with
   replay checks, HNF predicates, density metrics, and exact coefficient-growth
   reporting.
 - `v0.5`: SNF certificates with `(D,U,V)` and trace replay.
-- `v0.6`: Lean checker for small exported RREF JSON certificates; SNF Lean
-  checker follow-up.
+- `v0.6`: Lean checker for small exported RREF JSON certificates and SNF JSON
+  certificates with exact replay, transform, equation, and diagonal-form checks.
 - `v0.7`: paper-style RREF/HNF benchmark report with Markdown, machine JSON,
   and PNG plots.
 - `v0.8`: HNF NPZ shards, supervised imitation, online DAgger,

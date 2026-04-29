@@ -49,7 +49,9 @@ portable JSON certificate schema.
 
 Integer SNF certificates use schema version `snf-certificate-json-v0.1` and
 kind `snf_int`. The Python schema, structural validator, replay verifier, and
-equation checker live in `nf_agent.certificates`.
+equation checker live in `nf_agent.certificates`. The Lean checker accepts the
+same core record shape for checker-only replay and equation validation; Python
+remains the strict JSON schema authority.
 
 ```json
 {
@@ -97,6 +99,14 @@ Verified checker obligations:
 - Treat `swap`, `negate`, and `add` elementary operation replay to identity as
   the unimodularity witness for the recorded transformations.
 
-Deferred checker obligations:
+The Lean checker exposes:
 
-- Extend the Lean checker to SNF after the RREF JSON checker slice.
+- `parseSNFCertificateJson : String -> Except String SNFCertificate`
+- `verifySNFCertificate : SNFCertificate -> Except String Unit`
+- `verifySNFCertificateJson : String -> Except String Unit`
+- `checkSNFCertificate : SNFCertificate -> Bool`
+- `checkSNFCertificateJson : String -> Bool`
+
+Lean checks required fields, matrix dimensions, row/column operation replay,
+recorded transform replay, the exact matrix equation, and rectangular SNF
+diagonal form. It is not a full replacement for the Python JSON schema linter.
