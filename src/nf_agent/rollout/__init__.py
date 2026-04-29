@@ -18,9 +18,14 @@ from nf_agent.rollout.hnf_neural import (
 from nf_agent.rollout.rref_matrixformer import (
     RREFMatrixFormerRolloutConfig,
     RREFMatrixFormerRolloutResult,
+    RREFVerifierBeamConfig,
+    RREFVerifierBeamResult,
     rollout_rref_matrixformer,
     rollout_rref_matrixformer_sample,
     rollout_rref_matrixformer_with_logits,
+    rollout_rref_verifier_beam,
+    rollout_rref_verifier_beam_sample,
+    rollout_rref_verifier_beam_with_logits,
 )
 from nf_agent.rollout.rref_neural import (
     RREFPivotRolloutConfig,
@@ -40,6 +45,8 @@ __all__ = [
     "RREFMatrixFormerRolloutResult",
     "RREFPivotRolloutConfig",
     "RREFPivotRolloutResult",
+    "RREFVerifierBeamConfig",
+    "RREFVerifierBeamResult",
     "load_hnf_policy_runtime",
     "rollout_hnf_beam",
     "rollout_hnf_beam_sample",
@@ -51,6 +58,9 @@ __all__ = [
     "rollout_rref_matrixformer",
     "rollout_rref_matrixformer_sample",
     "rollout_rref_matrixformer_with_logits",
+    "rollout_rref_verifier_beam",
+    "rollout_rref_verifier_beam_sample",
+    "rollout_rref_verifier_beam_with_logits",
     "rollout_rref_pivot",
     "rollout_rref_pivot_sample",
     "rollout_rref_pivot_with_logits",
