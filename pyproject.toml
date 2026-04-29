@@ -21,12 +21,14 @@ dependencies = [
   "optax",
   "orbax-checkpoint",
   "pandas",
+  "psutil",
   "pydantic",
   "pyyaml",
   "rich",
   "scipy",
   "sympy",
   "tqdm",
+  "zarr",
 ]
 
 [project.scripts]
