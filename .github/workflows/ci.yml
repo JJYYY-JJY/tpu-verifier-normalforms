@@ -13,8 +13,8 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - name: Install Python dependencies
         run: |
-          uv python install 3.11
-          uv venv --python 3.11 --seed .venv
+          uv python install 3.12.13
+          uv venv --python 3.12.13 --seed .venv
           source .venv/bin/activate
           python -m pip install -U pip
           python -m pip install -r requirements-dev.txt -e .
