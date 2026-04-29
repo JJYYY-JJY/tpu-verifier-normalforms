@@ -1,0 +1,162 @@
+{
+  "benchmark": {
+    "cols": 8,
+    "count": 512,
+    "modulus": 101,
+    "policies": {
+      "leftmost": {
+        "mean_fill_in_delta": 0.0001220703125,
+        "mean_final_density": 0.125732421875,
+        "mean_initial_density": 0.98944091796875,
+        "mean_max_density": 0.98956298828125,
+        "mean_predicate_wall_time_seconds": 9.993441406175307e-06,
+        "mean_rank": 7.9921875,
+        "mean_replay_wall_time_seconds": 0.000352143035155128,
+        "mean_teacher_wall_time_seconds": 0.0004318646699210671,
+        "mean_trace_length": 63.337890625,
+        "mean_wall_time_seconds": 0.0007940011464823704,
+        "sample_count": 512,
+        "samples_per_second": 1259.44402527661,
+        "status_counts": {
+          "success": 512
+        },
+        "success_count": 512,
+        "success_rate": 1.0
+      },
+      "neural": {
+        "mean_fill_in_delta": 0.01055908203125,
+        "mean_final_density": 0.989959716796875,
+        "mean_initial_density": 0.98944091796875,
+        "mean_invalid_action_count": 9.619140625,
+        "mean_masked_action_count": 9.619140625,
+        "mean_max_density": 1.0,
+        "mean_predicate_wall_time_seconds": 6.840605470348482e-06,
+        "mean_replay_wall_time_seconds": 0.0004457937617177721,
+        "mean_rollout_wall_time_seconds": 1.3851280604863243,
+        "mean_step_count": 72.0,
+        "mean_wall_time_seconds": 1.3855806948535123,
+        "sample_count": 512,
+        "samples_per_second": 0.7217190624222164,
+        "status_counts": {
+          "max_steps_exceeded": 512
+        },
+        "success_count": 0,
+        "success_rate": 0.0
+      }
+    },
+    "rows": 8,
+    "source": "shard",
+    "status": "ok",
+    "wall_time_seconds": 711.1626056599999
+  },
+  "calibration": {
+    "candidates": [
+      {
+        "batch_size": 128,
+        "checkpoint_step": 5,
+        "final_loss": 8.906656265258789,
+        "samples_per_second": 101.74470699595624,
+        "status": "ok",
+        "wall_time_seconds": 6.2902535069999885
+      },
+      {
+        "batch_size": 256,
+        "checkpoint_step": 5,
+        "final_loss": 8.797304153442383,
+        "samples_per_second": 572.4465060278453,
+        "status": "ok",
+        "wall_time_seconds": 2.236016792000015
+      },
+      {
+        "batch_size": 512,
+        "checkpoint_step": 5,
+        "final_loss": 8.765318870544434,
+        "samples_per_second": 855.6140364332969,
+        "status": "ok",
+        "wall_time_seconds": 2.9920032759999913
+      }
+    ],
+    "selected_batch_size": 512,
+    "status": "ok",
+    "wall_time_seconds": 11.518490555
+  },
+  "config": {
+    "batch_candidates": [
+      128,
+      256,
+      512
+    ],
+    "benchmark_count": 512,
+    "checkpoint_every": 50,
+    "hidden_sizes": [
+      512,
+      512
+    ],
+    "max_steps": 72,
+    "shard_count": 4096,
+    "train_steps": 2000
+  },
+  "env": {
+    "JAX_PLATFORMS": "tpu,cpu"
+  },
+  "host": {
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "python_executable": "python3",
+    "release": "6.6.113+",
+    "system": "Linux"
+  },
+  "jax": {
+    "backend": "tpu",
+    "devices": [
+      {
+        "device_kind": "TPU v6 lite",
+        "platform": "tpu"
+      }
+    ],
+    "local_device_count": 1,
+    "required_backend": "tpu"
+  },
+  "no_fallback_statement": "No hidden teacher fallback: leftmost is reported only as an explicit baseline; neural failures remain neural status counts.",
+  "profile": "colab-v6e1-large",
+  "schema_version": "rref-measured-run-v1",
+  "selected_batch_size": 512,
+  "stage_wall_times": {
+    "benchmark_seconds": 711.1626056599999,
+    "calibration_seconds": 11.518490555,
+    "shard_seconds": 1.9965554139999995,
+    "total_seconds": 743.25947864,
+    "train_seconds": 16.53556507900001
+  },
+  "status": "ok",
+  "task": {
+    "cols": 8,
+    "modulus": 101,
+    "rows": 8
+  },
+  "train": {
+    "checkpoint_every": 50,
+    "checkpoint_step": 2000,
+    "final_loss": 1.8333815336227417,
+    "final_step": 2000,
+    "parameters_changed": true,
+    "per_head_metrics": {
+      "op_kind_loss": 0.04506311193108559,
+      "op_scalar_loss": 1.6327368021011353,
+      "op_source_loss": 0.0013376892311498523,
+      "op_target_loss": 0.15270008146762848,
+      "pivot_active_loss": 0.001543878111988306,
+      "pivot_col_loss": 0.0
+    },
+    "samples_per_second_proxy": 61927.124661767324,
+    "samples_seen_proxy": 1024000,
+    "status": "ok",
+    "steps_completed": 2000,
+    "wall_time_seconds": 16.53556507900001
+  },
+  "versions": {
+    "jax": "0.7.2",
+    "jaxlib": "0.7.2",
+    "python": "3.12.13"
+  }
+}
