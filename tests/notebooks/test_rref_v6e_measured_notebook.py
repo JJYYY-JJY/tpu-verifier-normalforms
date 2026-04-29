@@ -53,6 +53,8 @@ def test_rref_v6e_measured_notebook_runs_large_colab_profile() -> None:
         "results/measured/rref_8x8_mod101_colab_v6e1_large.json",
         "results/measured/rref_8x8_mod101_colab_v6e1_large.md",
         "files.download",
+        "getpass",
+        "remote\", \"set-url\", \"origin\"",
     )
     for snippet in required_snippets:
         assert snippet in source
