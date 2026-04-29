@@ -104,8 +104,17 @@ nf-agent benchmark hnf \
   --density 0.2 \
   --entry-bound 9 \
   --seed-start 0
+nf-agent benchmark snf \
+  --rows 4 \
+  --cols 4 \
+  --count 4 \
+  --diagonal-factor-bound 5 \
+  --row-op-count 2 \
+  --col-op-count 2 \
+  --op-scalar-bound 3 \
+  --seed-start 0
 nf-agent report benchmark \
-  --out-dir /tmp/nf-v0.7-report
+  --out-dir /tmp/nf-v0.9-report
 nf-agent benchmark rref \
   --source shard \
   --data /tmp/rref_8x8_smoke.npz \
@@ -176,16 +185,26 @@ scalar)` with distinct target/source rows. Coefficient-growth metrics are exact
 integers: `initial_max_abs`, `max_abs_seen`, `initial_bitlength`,
 `max_bitlength`, `growth_numerator`, `growth_denominator`, and `step_count`.
 
+The SNF benchmark command emits compact JSON for generated integer certificates
+from known rectangular diagonal forms. It does not run an SNF solver. The
+`certificate_replay` policy constructs exact row/column operation certificates,
+checks replay through `replay_snf_certificate`, verifies transforms and
+`U * input * V = D` through `verify_snf_certificate`, and reports compact
+density, max-absolute-value, bitlength, operation-count, and timing metrics.
+Input matrices, diagonal matrices, transforms, and operation traces are omitted
+from samples.
+
 The paper-style benchmark report command writes a reproducible report directory:
 
 ```bash
-nf-agent report benchmark --out-dir /tmp/nf-v0.7-report
+nf-agent report benchmark --out-dir /tmp/nf-v0.9-report
 ```
 
 Without `--input-json`, it runs the built-in `paper-smoke` suite: generated RREF
-dense, sparse, and low-rank samples plus generated sparse integer HNF samples.
+dense, sparse, and low-rank samples, generated sparse integer HNF samples, and
+generated SNF certificate samples.
 With one or more `--input-json PATH` options, it only summarizes existing compact
-RREF/HNF benchmark JSON. The output directory contains `report.md`,
+RREF/HNF/SNF benchmark JSON. The output directory contains `report.md`,
 `metrics.json`, and `plots/*.png`. Neural RREF/HNF policy rows appear only when
 input benchmark data includes rollout metrics or when run mode receives matching
 model metadata and checkpoints.
@@ -226,3 +245,5 @@ threshold verdict comparing `dagger_actor_critic_beam` with
 - `v0.8`: HNF NPZ shards, supervised imitation, online DAgger,
   actor-critic fine-tuning, verifier beam search, HNF learned-policy benchmark,
   and experiment report bundles.
+- `v0.9`: generated SNF certificate benchmark coverage and RREF/HNF/SNF
+  benchmark report integration.

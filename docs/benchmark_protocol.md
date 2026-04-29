@@ -11,6 +11,11 @@ runs learned greedy and beam policies on the same generated sparse integer
 matrices. Neural failures remain neural failures; they are not replaced by
 teacher traces.
 
+`nf-agent benchmark snf` is the integer SNF certificate benchmark suite. It
+generates certificates from known rectangular diagonal SNF forms and exact
+unimodular row/column operations. It calls the existing SNF certificate replay
+and verifier as the authority. It is not an SNF solver benchmark.
+
 ## Sources
 
 - `source="generated"`: generate dense, sparse, or low-rank matrices from
@@ -22,6 +27,9 @@ teacher traces.
   benchmarks, `data_path` is the default model metadata shard.
 - `nf-agent benchmark hnf`: generate sparse integer matrices from `rows`,
   `cols`, `count`, `density`, `entry_bound`, and `seed_start`.
+- `nf-agent benchmark snf`: generate integer certificates from `rows`, `cols`,
+  `count`, `diagonal_factor_bound`, `row_op_count`, `col_op_count`,
+  `op_scalar_bound`, and `seed_start`.
 
 ## Fill-In
 
@@ -39,6 +47,12 @@ Per-sample compact summaries record:
 For HNF, density is the fraction of exact nonzero integer entries. This density
 is a benchmark metric only; verifier replay and predicates remain exact integer
 arithmetic.
+
+For SNF certificate benchmarks, density is the fraction of exact nonzero integer
+entries over the replay profile from generated input through row and column
+operations to the declared diagonal. This density is a benchmark metric only;
+certificate replay, transform checks, equation checks, and diagonal-form checks
+remain exact integer arithmetic.
 
 ## JSON Schema
 
@@ -121,6 +135,34 @@ HNF learned-policy sample fields:
 - `wall_time_seconds`, `rollout_wall_time_seconds`, `replay_wall_time_seconds`,
   and `predicate_wall_time_seconds`.
 
+SNF top-level fields:
+
+- `status`: `ok`.
+- `source`: `generated`.
+- `family`: `snf_certificate`.
+- `count`, `rows`, `cols`, `diagonal_factor_bound`, `row_op_count`,
+  `col_op_count`, `op_scalar_bound`, and `seed_start`.
+- `policies`: per-policy results keyed by `certificate_replay`.
+
+The SNF `certificate_replay` policy contains:
+
+- `aggregate`: `sample_count`, `success_count`, `success_rate`,
+  `status_counts`, mean row/column/total operation counts, mean density/time
+  metrics, and exact maxima for max-absolute-value and bitlength metrics.
+- `samples`: compact per-sample summaries. Input matrices, diagonal matrices,
+  transforms, and row/column operation traces are intentionally omitted.
+
+SNF `certificate_replay` sample fields:
+
+- `sample_index` and `seed`.
+- `status`, `success`, `row_op_count`, `col_op_count`, and `operation_count`.
+- `replay_ok` and `verified`.
+- Fill-in density fields.
+- Exact magnitude fields: `initial_max_abs`, `max_abs_seen`,
+  `initial_bitlength`, and `max_bitlength`.
+- `wall_time_seconds`, `replay_wall_time_seconds`, and
+  `verify_wall_time_seconds`.
+
 ## Metrics
 
 - Verification success rate.
@@ -149,14 +191,16 @@ Matrix families:
 - Low-rank products `A * B mod p`.
 - Sparse integer matrices with Bernoulli support and selected entries sampled
   from `[-entry_bound, entry_bound] \ {0}`. The default `entry_bound` is `9`.
-- Future SNF families.
+- SNF certificate matrices generated from nonnegative rectangular diagonal
+  forms with divisibility chains, then transformed by exact unimodular row and
+  column operations.
 
 No benchmark may replace a failed neural rollout with a deterministic teacher
 without reporting the rollout as failed.
 
 ## Paper-Style Report
 
-`nf-agent report benchmark --out-dir PATH` writes the v0.8 benchmark report
+`nf-agent report benchmark --out-dir PATH` writes the v0.9 benchmark report
 artifacts:
 
 - `report.md`: human-readable Markdown with provenance, exactness/no-fallback
@@ -180,22 +224,30 @@ in this slice is `paper-smoke`, with defaults:
 - `--low-rank 3`
 - `--hnf-entry-bound 9`
 
+SNF certificate rows in this suite use the benchmark defaults
+`diagonal_factor_bound=5`, `row_op_count=2`, `col_op_count=2`, and
+`op_scalar_bound=3`.
+
 Run mode benchmarks generated RREF dense, sparse, and low-rank families plus
-generated sparse integer HNF. RREF neural rows are included only when both
-`--rref-checkpoint` and `--rref-model-data` are supplied and the model-data
-metadata matches the generated RREF suite.
+generated sparse integer HNF and generated SNF certificates. RREF neural rows
+are included only when both `--rref-checkpoint` and `--rref-model-data` are
+supplied and the model-data metadata matches the generated RREF suite.
 
 Summary mode is selected by one or more `--input-json PATH` options. It does not
 run benchmarks; it only summarizes existing compact JSON emitted by
-`nf-agent benchmark rref` and `nf-agent benchmark hnf`. Unknown JSON shapes and
-non-compact samples containing full matrices or row-operation traces are
-rejected.
+`nf-agent benchmark rref`, `nf-agent benchmark hnf`, and
+`nf-agent benchmark snf`. Unknown JSON shapes and non-compact samples
+containing full matrices, transforms, or operation traces are rejected.
 
 Report averages and plots may use numeric benchmark metrics already emitted by
 the benchmark harness. Verifier paths remain exact: no floating point is used in
 certificate replay, row-operation replay, or normal-form predicates. Failed
 neural rollouts remain failed neural rows; the report never replaces them with
 deterministic teacher traces.
+
+The SNF report row is limited to generated certificates from known diagonal
+forms. It checks certificate replay and verification coverage, not algorithmic
+SNF computation quality.
 
 ## HNF v0.8 Experiment
 
