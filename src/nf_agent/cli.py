@@ -13,7 +13,13 @@ from nf_agent.benchmarks import (
     run_snf_benchmark,
 )
 from nf_agent.benchmarks.rref_benchmark import BenchmarkSource, MatrixFamily
-from nf_agent.data.hnf_shards import write_hnf_shard
+from nf_agent.data.hnf_shards import (
+    BACKWARD_SCHEMA_VERSION as HNF_BACKWARD_SCHEMA_VERSION,
+)
+from nf_agent.data.hnf_shards import (
+    write_hnf_backward_shard,
+    write_hnf_shard,
+)
 from nf_agent.data.matrix_families import dense_random_matrix, sparse_random_matrix
 from nf_agent.data.rref_backward_shards import SCHEMA_VERSION as RREF_BACKWARD_SCHEMA_VERSION
 from nf_agent.data.rref_backward_shards import write_rref_backward_shard
@@ -23,7 +29,12 @@ from nf_agent.data.rref_state_shards import load_rref_state_shard, write_rref_st
 from nf_agent.data.shard_storage import shard_format
 from nf_agent.env.rref_modp import RowOp, is_rref_modp, replay_row_ops, rref_leftmost
 from nf_agent.experiments import HNFV08ExperimentConfig, run_hnf_v08_experiment
-from nf_agent.profiles import V6EStatusConfig, write_v6e_status
+from nf_agent.profiles import (
+    HNFGrowthProfileConfig,
+    V6EStatusConfig,
+    write_hnf_growth_profile,
+    write_v6e_status,
+)
 from nf_agent.reports import (
     BenchmarkReportConfig,
     V6EProfileReportConfig,
@@ -94,6 +105,42 @@ def profile_v6e_status(memory_profile: str, required_backend: str | None) -> Non
             )
         )
     except (RuntimeError, TypeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(payload)
+
+
+@profile.command("hnf-growth")
+@click.option(
+    "--config",
+    "config_path",
+    type=click.Path(exists=True, dir_okay=False),
+    required=True,
+)
+@click.option("--work-dir", type=click.Path(file_okay=False), required=True)
+@click.option("--out-dir", type=click.Path(file_okay=False), required=True)
+@click.option("--family", type=str, required=True)
+@click.option("--count", type=int, required=True)
+@click.option("--seed-start", type=int, default=0, show_default=True)
+def profile_hnf_growth(
+    config_path: str,
+    work_dir: str,
+    out_dir: str,
+    family: str,
+    count: int,
+    seed_start: int,
+) -> None:
+    try:
+        payload = write_hnf_growth_profile(
+            HNFGrowthProfileConfig(
+                config_path=config_path,
+                work_dir=work_dir,
+                out_dir=out_dir,
+                family=family,
+                count=count,
+                seed_start=seed_start,
+            )
+        )
+    except (OSError, TypeError, ValueError, IndexError) as exc:
         raise click.ClickException(str(exc)) from exc
     _emit_json(payload)
 
@@ -222,6 +269,47 @@ def make_hnf_shard(config_path: str, count: int, seed_start: int, out_path: str)
     except (TypeError, ValueError) as exc:
         raise click.ClickException(str(exc)) from exc
     _emit_json({"status": "ok", "out": out_path, "count": count, "seed_start": seed_start})
+
+
+@data.command("make-hnf-backward-shard")
+@click.option(
+    "--config",
+    "config_path",
+    type=click.Path(exists=True, dir_okay=False),
+    required=True,
+)
+@click.option("--family", type=str, required=True)
+@click.option("--count", type=int, required=True)
+@click.option("--seed-start", type=int, default=0, show_default=True)
+@click.option("--out", "out_path", type=click.Path(), required=True)
+def make_hnf_backward_shard(
+    config_path: str,
+    family: str,
+    count: int,
+    seed_start: int,
+    out_path: str,
+) -> None:
+    try:
+        write_hnf_backward_shard(
+            config_path=config_path,
+            family=family,
+            count=count,
+            seed_start=seed_start,
+            out_path=out_path,
+        )
+    except (TypeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(
+        {
+            "status": "ok",
+            "schema_version": HNF_BACKWARD_SCHEMA_VERSION,
+            "format": shard_format(Path(out_path)),
+            "out": out_path,
+            "family": family,
+            "count": count,
+            "seed_start": seed_start,
+        }
+    )
 
 
 @main.group()
