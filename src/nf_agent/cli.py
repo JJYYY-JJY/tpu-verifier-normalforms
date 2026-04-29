@@ -1,5 +1,6 @@
 import json
-from typing import Any, cast
+from pathlib import Path
+from typing import Any, Literal, cast
 
 import click
 
@@ -19,17 +20,26 @@ from nf_agent.data.rref_backward_shards import write_rref_backward_shard
 from nf_agent.data.rref_shards import write_rref_shard
 from nf_agent.data.rref_state_shards import SCHEMA_VERSION as RREF_STATE_SCHEMA_VERSION
 from nf_agent.data.rref_state_shards import load_rref_state_shard, write_rref_state_shard
+from nf_agent.data.shard_storage import shard_format
 from nf_agent.env.rref_modp import RowOp, is_rref_modp, replay_row_ops, rref_leftmost
 from nf_agent.experiments import HNFV08ExperimentConfig, run_hnf_v08_experiment
-from nf_agent.reports import BenchmarkReportConfig, build_benchmark_report
+from nf_agent.profiles import V6EStatusConfig, write_v6e_status
+from nf_agent.reports import (
+    BenchmarkReportConfig,
+    V6EProfileReportConfig,
+    build_benchmark_report,
+    build_v6e_profile_report,
+)
 from nf_agent.rollout import (
     HNFRolloutConfig,
     RREFMatrixFormerRolloutConfig,
     RREFPivotRolloutConfig,
+    RREFVerifierBeamConfig,
     rollout_hnf_beam_sample,
     rollout_hnf_policy_sample,
     rollout_rref_matrixformer_sample,
     rollout_rref_pivot_sample,
+    rollout_rref_verifier_beam_sample,
 )
 from nf_agent.train import (
     HNFActorCriticConfig,
@@ -61,6 +71,31 @@ def _emit_json(payload: dict[str, Any]) -> None:
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 def main() -> None:
     """Verifier-guided normal-form agent tools."""
+
+
+@main.group()
+def profile() -> None:
+    """Probe local/remote accelerator status."""
+
+
+@profile.command("v6e-status")
+@click.option("--memory-profile", type=click.Path(), required=True)
+@click.option(
+    "--required-backend",
+    type=click.Choice(["cpu", "gpu", "tpu"]),
+    default=None,
+)
+def profile_v6e_status(memory_profile: str, required_backend: str | None) -> None:
+    try:
+        payload = write_v6e_status(
+            V6EStatusConfig(
+                memory_profile=memory_profile,
+                required_backend=cast(Literal["cpu", "gpu", "tpu"] | None, required_backend),
+            )
+        )
+    except (RuntimeError, TypeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(payload)
 
 
 @main.group()
