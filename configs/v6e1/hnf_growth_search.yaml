@@ -1,4 +1,4 @@
-# v1.1 HNF growth-search alpha config consumed by `nf-agent profile hnf-growth`.
+# v1.1 HNF growth-search beta config consumed by `nf-agent profile hnf-growth`.
 task: hnf_growth_search
 integer_families:
   - name: sparse_8x8
@@ -26,11 +26,20 @@ features:
   include_zero_mask: true
   include_bitlength_bucket: true
   include_density: true
+search:
+  mode: exact_row_preconditioned
+  candidate_limit: 64
+  objective:
+    - max_bitlength
+    - max_abs_seen
+    - fill_in_delta
+    - step_count
+    - certificate_size_entries
 model:
-  name: hnf-matrixformer
-  op_heads: [swap, negate, add]
+  name: none
+  note: exact search profile only; no HNF MatrixFormer training in v1.1 beta
 rollout:
-  command: hnf-verifier-beam
+  command: exact-row-preconditioned-row-hnf
   beam_size: 16
   max_steps: 512
 metrics:
