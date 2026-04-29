@@ -121,6 +121,7 @@ def profile_v6e_status(memory_profile: str, required_backend: str | None) -> Non
 @click.option("--family", type=str, required=True)
 @click.option("--count", type=int, required=True)
 @click.option("--seed-start", type=int, default=0, show_default=True)
+@click.option("--candidate-limit", type=int, default=None)
 def profile_hnf_growth(
     config_path: str,
     work_dir: str,
@@ -128,6 +129,7 @@ def profile_hnf_growth(
     family: str,
     count: int,
     seed_start: int,
+    candidate_limit: int | None,
 ) -> None:
     try:
         payload = write_hnf_growth_profile(
@@ -138,6 +140,7 @@ def profile_hnf_growth(
                 family=family,
                 count=count,
                 seed_start=seed_start,
+                candidate_limit=candidate_limit,
             )
         )
     except (OSError, TypeError, ValueError, IndexError) as exc:
