@@ -1,7 +1,18 @@
-# TPU Verifier Normal Forms
+# CertiNF-v6e: TPU-Native Verifier-Guided Normal Forms
 
-Research monorepo for verifier-guided agents that learn exact matrix normal-form
-procedures while remaining checkable by deterministic algebraic replay.
+Research monorepo for TPU-native certificate search policies that propose
+normal-form row and column operations while deterministic exact algebra remains
+the verifier, replay, and checker authority.
+
+The mainline direction is CertiNF-v6e: backward-generated state shards,
+MatrixFormer-style step policies, device-batched beam/search, CPU exact
+verification, and compact artifacts suitable for paper and resume evidence.
+
+See:
+
+- `docs/architecture/certinf_v6e_design.md`
+- `docs/benchmarks/v6e1_protocol.md`
+- `configs/v6e1/`
 
 ## Current Baseline: v0.9
 
@@ -287,3 +298,9 @@ threshold verdict comparing `dagger_actor_critic_beam` with
   and experiment report bundles.
 - `v0.9`: generated SNF certificate benchmark coverage and RREF/HNF/SNF
   benchmark report integration.
+- `v1.0-alpha1`: RREF backward trace and state/action shards.
+- `v1.0-alpha2`: RREF MatrixFormer smoke training and rollout.
+- `v1.0-beta1`: v6e RREF batched verifier beam.
+- `v1.1`: HNF coefficient-growth search.
+- `v1.2`: SNF certificate search plus Lean checker samples.
+- `v1.3`: optional Pallas hot-path experiments after v1.0/v1.1 stabilize.
