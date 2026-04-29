@@ -5,6 +5,7 @@ import numpy as np
 from click.testing import CliRunner
 
 from nf_agent.cli import main
+from nf_agent.data.hnf_shards import load_hnf_backward_shard
 
 CONFIG = Path("configs/rref_8x8_mod101.yaml").resolve()
 
@@ -266,3 +267,50 @@ def test_make_rref_state_shard_cli_rejects_unknown_output_format(tmp_path: Path)
 
     assert result.exit_code != 0
     assert "data path must end with .npz or .zarr" in result.output
+
+
+def test_make_hnf_backward_shard_cli_writes_valid_zarr(tmp_path: Path) -> None:
+    config_path = tmp_path / "hnf_growth.yaml"
+    config_path.write_text(
+        "task: hnf_growth_search\n"
+        "integer_families:\n"
+        "  - name: tiny_sparse\n"
+        "    rows: 3\n"
+        "    cols: 4\n"
+        "    density: 0.5\n"
+        "    entry_bound: 4\n"
+        "backward_trace:\n"
+        "  schema: hnf-backward-trace-zarr-v1\n"
+        "  format: zarr\n"
+        "  require_unimodular_ops: true\n"
+    )
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            main,
+            [
+                "data",
+                "make-hnf-backward-shard",
+                "--config",
+                str(config_path),
+                "--family",
+                "tiny_sparse",
+                "--count",
+                "2",
+                "--seed-start",
+                "3",
+                "--out",
+                "out/hnf_backward.zarr",
+            ],
+        )
+
+        assert result.exit_code == 0, result.output
+        payload = json.loads(result.output)
+        assert payload["status"] == "ok"
+        assert payload["schema_version"] == "hnf-backward-trace-zarr-v1"
+        assert payload["format"] == "zarr"
+        arrays, metadata = load_hnf_backward_shard("out/hnf_backward.zarr")
+
+    assert arrays["inputs"].shape == (2, 3, 4)
+    assert metadata["config"]["family"]["name"] == "tiny_sparse"
