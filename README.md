@@ -3,6 +3,18 @@
 Research monorepo for verifier-guided agents that learn exact matrix normal-form
 procedures while remaining checkable by deterministic algebraic replay.
 
+## Current Baseline: v0.9
+
+The current baseline is the verifier-first RREF/HNF/SNF stack with compact
+benchmark reporting and measured RREF 8x8/F_101 runs on Apple M4 CPU and Colab
+v6e-1 TPU. See `docs/v0.9_closure.md` and `results/measured/`.
+
+Known v6e bottleneck: the tracked `colab-v6e1-large` run is not a saturation
+workload. TPU training is faster than Apple M4 by the harness proxy, but
+end-to-end time is dominated by host/sample-wise benchmark rollout. The current
+`PivotMLP` neural policy reports `max_steps_exceeded` on all 512 benchmark
+samples; the leftmost teacher remains an explicit baseline only.
+
 The first vertical slice is finite-field RREF over `F_101`:
 
 ```text
