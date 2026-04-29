@@ -1,0 +1,85 @@
+{
+  "col_op_count": 1,
+  "cols": 3,
+  "count": 2,
+  "diagonal_factor_bound": 5,
+  "family": "snf_certificate",
+  "op_scalar_bound": 3,
+  "policies": {
+    "certificate_replay": {
+      "aggregate": {
+        "max_initial_bitlength": 7,
+        "max_initial_max_abs": 72,
+        "max_max_abs_seen": 72,
+        "max_max_bitlength": 7,
+        "mean_col_op_count": 1.0,
+        "mean_fill_in_delta": 0.0,
+        "mean_final_density": 0.3333333333333333,
+        "mean_initial_density": 0.4444444444444444,
+        "mean_max_density": 0.4444444444444444,
+        "mean_operation_count": 3.0,
+        "mean_replay_wall_time_seconds": 0.0,
+        "mean_row_op_count": 2.0,
+        "mean_verify_wall_time_seconds": 0.0,
+        "mean_wall_time_seconds": 0.0,
+        "sample_count": 2,
+        "status_counts": {
+          "success": 2
+        },
+        "success_count": 2,
+        "success_rate": 1.0
+      },
+      "samples": [
+        {
+          "col_op_count": 1,
+          "fill_in_delta": 0.0,
+          "final_density": 0.3333333333333333,
+          "initial_bitlength": 5,
+          "initial_density": 0.4444444444444444,
+          "initial_max_abs": 24,
+          "max_abs_seen": 24,
+          "max_bitlength": 5,
+          "max_density": 0.4444444444444444,
+          "operation_count": 3,
+          "replay_ok": true,
+          "replay_wall_time_seconds": 0.0,
+          "row_op_count": 2,
+          "sample_index": 0,
+          "seed": 7,
+          "status": "success",
+          "success": true,
+          "verified": true,
+          "verify_wall_time_seconds": 0.0,
+          "wall_time_seconds": 0.0
+        },
+        {
+          "col_op_count": 1,
+          "fill_in_delta": 0.0,
+          "final_density": 0.3333333333333333,
+          "initial_bitlength": 7,
+          "initial_density": 0.4444444444444444,
+          "initial_max_abs": 72,
+          "max_abs_seen": 72,
+          "max_bitlength": 7,
+          "max_density": 0.4444444444444444,
+          "operation_count": 3,
+          "replay_ok": true,
+          "replay_wall_time_seconds": 0.0,
+          "row_op_count": 2,
+          "sample_index": 1,
+          "seed": 8,
+          "status": "success",
+          "success": true,
+          "verified": true,
+          "verify_wall_time_seconds": 0.0,
+          "wall_time_seconds": 0.0
+        }
+      ]
+    }
+  },
+  "row_op_count": 2,
+  "rows": 3,
+  "seed_start": 7,
+  "source": "generated",
+  "status": "ok"
+}

@@ -1,0 +1,279 @@
+{
+  "artifacts": {
+    "hnf_v08_metrics": "/tmp/nf-pre-colab/hnf_v08/metrics.json",
+    "manifest": "/tmp/nf-pre-colab/manifest.json",
+    "report_metrics": "/tmp/nf-pre-colab/report_smoke/metrics.json",
+    "rref_checkpoint": "/tmp/nf-pre-colab/rref_pivot_ckpt",
+    "rref_shard": "/tmp/nf-pre-colab/rref_8x8_train_smoke.npz",
+    "rref_shard_benchmark": "/tmp/nf-pre-colab/rref_shard_benchmark_smoke.json",
+    "snf_benchmark": "/tmp/nf-pre-colab/snf_benchmark_smoke.json"
+  },
+  "commands": [
+    {
+      "command": [
+        "nf-agent",
+        "data",
+        "make-rref-shard",
+        "--config",
+        "configs/rref_8x8_mod101.yaml",
+        "--count",
+        "8",
+        "--seed-start",
+        "0",
+        "--out",
+        "/tmp/nf-pre-colab/rref_8x8_train_smoke.npz"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "name": "rref_shard",
+      "stderr_path": "/tmp/nf-pre-colab/logs/rref_shard.stderr",
+      "stdout_path": "/tmp/nf-pre-colab/logs/rref_shard.stdout"
+    },
+    {
+      "command": [
+        "nf-agent",
+        "train",
+        "rref-pivot",
+        "--data",
+        "/tmp/nf-pre-colab/rref_8x8_train_smoke.npz",
+        "--steps",
+        "2",
+        "--batch-size",
+        "4",
+        "--learning-rate",
+        "0.001",
+        "--seed",
+        "0",
+        "--hidden-size",
+        "32",
+        "--out",
+        "/tmp/nf-pre-colab/rref_pivot_ckpt"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "name": "rref_train",
+      "stderr_path": "/tmp/nf-pre-colab/logs/rref_train.stderr",
+      "stdout_path": "/tmp/nf-pre-colab/logs/rref_train.stdout"
+    },
+    {
+      "command": [
+        "nf-agent",
+        "rollout",
+        "rref-neural",
+        "--data",
+        "/tmp/nf-pre-colab/rref_8x8_train_smoke.npz",
+        "--checkpoint",
+        "/tmp/nf-pre-colab/rref_pivot_ckpt",
+        "--sample-index",
+        "0",
+        "--max-steps",
+        "8",
+        "--hidden-size",
+        "32"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "name": "rref_rollout",
+      "stderr_path": "/tmp/nf-pre-colab/logs/rref_rollout.stderr",
+      "stdout_path": "/tmp/nf-pre-colab/logs/rref_rollout.stdout"
+    },
+    {
+      "command": [
+        "nf-agent",
+        "benchmark",
+        "rref",
+        "--source",
+        "shard",
+        "--data",
+        "/tmp/nf-pre-colab/rref_8x8_train_smoke.npz",
+        "--count",
+        "4",
+        "--checkpoint",
+        "/tmp/nf-pre-colab/rref_pivot_ckpt",
+        "--max-steps",
+        "8",
+        "--hidden-size",
+        "32"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "name": "rref_shard_benchmark",
+      "stderr_path": "/tmp/nf-pre-colab/logs/rref_shard_benchmark.stderr",
+      "stdout_path": "/tmp/nf-pre-colab/logs/rref_shard_benchmark.stdout"
+    },
+    {
+      "command": [
+        "nf-agent",
+        "experiment",
+        "hnf-v08",
+        "--out-dir",
+        "/tmp/nf-pre-colab/hnf_v08",
+        "--samples-per-size",
+        "2",
+        "--run-seed-count",
+        "1",
+        "--sizes",
+        "3",
+        "--density",
+        "0.5",
+        "--entry-bound",
+        "4",
+        "--train-steps",
+        "1",
+        "--dagger-iterations",
+        "1",
+        "--actor-critic-steps",
+        "1",
+        "--batch-size",
+        "2",
+        "--hidden-size",
+        "16",
+        "--benchmark-max-steps",
+        "2",
+        "--allow-threshold-failure"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "name": "hnf_v08_experiment",
+      "stderr_path": "/tmp/nf-pre-colab/logs/hnf_v08_experiment.stderr",
+      "stdout_path": "/tmp/nf-pre-colab/logs/hnf_v08_experiment.stdout"
+    },
+    {
+      "command": [
+        "nf-agent",
+        "benchmark",
+        "snf",
+        "--rows",
+        "3",
+        "--cols",
+        "3",
+        "--count",
+        "2",
+        "--diagonal-factor-bound",
+        "5",
+        "--row-op-count",
+        "2",
+        "--col-op-count",
+        "1",
+        "--op-scalar-bound",
+        "3",
+        "--seed-start",
+        "7"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "name": "snf_benchmark",
+      "stderr_path": "/tmp/nf-pre-colab/logs/snf_benchmark.stderr",
+      "stdout_path": "/tmp/nf-pre-colab/logs/snf_benchmark.stdout"
+    },
+    {
+      "command": [
+        "nf-agent",
+        "report",
+        "benchmark",
+        "--out-dir",
+        "/tmp/nf-pre-colab/report_smoke",
+        "--sample-count",
+        "2",
+        "--rows",
+        "3",
+        "--cols",
+        "3",
+        "--p",
+        "5",
+        "--seed-start",
+        "0",
+        "--sparse-density",
+        "0.3",
+        "--low-rank",
+        "2",
+        "--hnf-entry-bound",
+        "5"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "name": "report_smoke",
+      "stderr_path": "/tmp/nf-pre-colab/logs/report_smoke.stderr",
+      "stdout_path": "/tmp/nf-pre-colab/logs/report_smoke.stdout"
+    },
+    {
+      "command": [
+        "lake",
+        "build"
+      ],
+      "cwd": "lean",
+      "exit_code": 0,
+      "name": "lean_build",
+      "stderr_path": "/tmp/nf-pre-colab/logs/lean_build.stderr",
+      "stdout_path": "/tmp/nf-pre-colab/logs/lean_build.stdout"
+    }
+  ],
+  "git_commit": "c792f5fb1d6b5c12eb9aa02c79f01749978cfbde",
+  "overall_status": "ok",
+  "schema_version": "pre-colab-preflight-manifest-v1",
+  "verdicts": {
+    "hnf_v08": {
+      "benchmark_count": 1,
+      "status": "ok",
+      "threshold_passed": true
+    },
+    "report_smoke": {
+      "mode": "run",
+      "plot_count": 4,
+      "status": "ok",
+      "suite": "paper-smoke"
+    },
+    "rref_rollout": {
+      "final_is_rref": false,
+      "invalid_action_count": 2,
+      "masked_action_count": 2,
+      "status": "max_steps_exceeded",
+      "step_count": 8,
+      "success": false
+    },
+    "rref_shard_benchmark": {
+      "count": 4,
+      "policies": {
+        "leftmost": {
+          "sample_count": 4,
+          "status_counts": {
+            "success": 4
+          },
+          "success_count": 4,
+          "success_rate": 1.0
+        },
+        "neural": {
+          "sample_count": 4,
+          "status_counts": {
+            "max_steps_exceeded": 4
+          },
+          "success_count": 0,
+          "success_rate": 0.0
+        }
+      },
+      "source": "shard",
+      "status": "ok"
+    },
+    "snf_benchmark": {
+      "count": 2,
+      "policies": {
+        "certificate_replay": {
+          "sample_count": 2,
+          "status_counts": {
+            "success": 2
+          },
+          "success_count": 2,
+          "success_rate": 1.0
+        }
+      },
+      "source": "generated",
+      "status": "ok"
+    }
+  },
+  "versions": {
+    "lake": "Lake version 5.0.0-src+3dc1a08 (Lean version 4.30.0-rc2)",
+    "lean": "Lean (version 4.30.0-rc2, arm64-apple-darwin24.6.0, commit 3dc1a088b6d2d8eafe25a7cd7ec7b58d731bd7cc, Release)",
+    "python": "3.11.15"
+  },
+  "work_dir": "/tmp/nf-pre-colab"
+}

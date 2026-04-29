@@ -1,0 +1,227 @@
+{
+  "cols": 8,
+  "count": 4,
+  "modulus": 101,
+  "policies": {
+    "leftmost": {
+      "aggregate": {
+        "mean_fill_in_delta": 0.0,
+        "mean_final_density": 0.125,
+        "mean_initial_density": 0.9921875,
+        "mean_max_density": 0.9921875,
+        "mean_predicate_wall_time_seconds": 0.0,
+        "mean_rank": 8.0,
+        "mean_replay_wall_time_seconds": 0.0,
+        "mean_teacher_wall_time_seconds": 0.0,
+        "mean_trace_length": 63.0,
+        "mean_wall_time_seconds": 0.0,
+        "sample_count": 4,
+        "status_counts": {
+          "success": 4
+        },
+        "success_count": 4,
+        "success_rate": 1.0
+      },
+      "samples": [
+        {
+          "fill_in_delta": 0.0,
+          "final_density": 0.125,
+          "final_is_rref": true,
+          "initial_density": 0.984375,
+          "max_density": 0.984375,
+          "predicate_wall_time_seconds": 0.0,
+          "rank": 8,
+          "replay_ok": true,
+          "replay_wall_time_seconds": 0.0,
+          "sample_index": 0,
+          "seed": null,
+          "status": "success",
+          "success": true,
+          "teacher_wall_time_seconds": 0.0,
+          "trace_length": 63,
+          "wall_time_seconds": 0.0
+        },
+        {
+          "fill_in_delta": 0.0,
+          "final_density": 0.125,
+          "final_is_rref": true,
+          "initial_density": 0.984375,
+          "max_density": 0.984375,
+          "predicate_wall_time_seconds": 0.0,
+          "rank": 8,
+          "replay_ok": true,
+          "replay_wall_time_seconds": 0.0,
+          "sample_index": 1,
+          "seed": null,
+          "status": "success",
+          "success": true,
+          "teacher_wall_time_seconds": 0.0,
+          "trace_length": 63,
+          "wall_time_seconds": 0.0
+        },
+        {
+          "fill_in_delta": 0.0,
+          "final_density": 0.125,
+          "final_is_rref": true,
+          "initial_density": 1.0,
+          "max_density": 1.0,
+          "predicate_wall_time_seconds": 0.0,
+          "rank": 8,
+          "replay_ok": true,
+          "replay_wall_time_seconds": 0.0,
+          "sample_index": 2,
+          "seed": null,
+          "status": "success",
+          "success": true,
+          "teacher_wall_time_seconds": 0.0,
+          "trace_length": 63,
+          "wall_time_seconds": 0.0
+        },
+        {
+          "fill_in_delta": 0.0,
+          "final_density": 0.125,
+          "final_is_rref": true,
+          "initial_density": 1.0,
+          "max_density": 1.0,
+          "predicate_wall_time_seconds": 0.0,
+          "rank": 8,
+          "replay_ok": true,
+          "replay_wall_time_seconds": 0.0,
+          "sample_index": 3,
+          "seed": null,
+          "status": "success",
+          "success": true,
+          "teacher_wall_time_seconds": 0.0,
+          "trace_length": 63,
+          "wall_time_seconds": 0.0
+        }
+      ]
+    },
+    "neural": {
+      "aggregate": {
+        "mean_fill_in_delta": 0.0,
+        "mean_final_density": 0.9921875,
+        "mean_initial_density": 0.9921875,
+        "mean_invalid_action_count": 2.25,
+        "mean_masked_action_count": 2.25,
+        "mean_max_density": 0.9921875,
+        "mean_predicate_wall_time_seconds": 0.0,
+        "mean_replay_wall_time_seconds": 0.0,
+        "mean_rollout_wall_time_seconds": 0.0,
+        "mean_step_count": 8.0,
+        "mean_wall_time_seconds": 0.0,
+        "sample_count": 4,
+        "status_counts": {
+          "max_steps_exceeded": 4
+        },
+        "success_count": 0,
+        "success_rate": 0.0
+      },
+      "samples": [
+        {
+          "checkpoint_step": 2,
+          "fill_in_delta": 0.0,
+          "final_density": 0.984375,
+          "final_is_rref": false,
+          "initial_density": 0.984375,
+          "invalid_action_breakdown": {
+            "op_kind": 2,
+            "op_scalar": 0,
+            "op_source": 0
+          },
+          "invalid_action_count": 2,
+          "masked_action_count": 2,
+          "max_density": 0.984375,
+          "predicate_wall_time_seconds": 0.0,
+          "replay_ok": true,
+          "replay_wall_time_seconds": 0.0,
+          "rollout_wall_time_seconds": 0.0,
+          "sample_index": 0,
+          "seed": null,
+          "status": "max_steps_exceeded",
+          "step_count": 8,
+          "success": false,
+          "wall_time_seconds": 0.0
+        },
+        {
+          "checkpoint_step": 2,
+          "fill_in_delta": 0.0,
+          "final_density": 0.984375,
+          "final_is_rref": false,
+          "initial_density": 0.984375,
+          "invalid_action_breakdown": {
+            "op_kind": 2,
+            "op_scalar": 0,
+            "op_source": 1
+          },
+          "invalid_action_count": 3,
+          "masked_action_count": 3,
+          "max_density": 0.984375,
+          "predicate_wall_time_seconds": 0.0,
+          "replay_ok": true,
+          "replay_wall_time_seconds": 0.0,
+          "rollout_wall_time_seconds": 0.0,
+          "sample_index": 1,
+          "seed": null,
+          "status": "max_steps_exceeded",
+          "step_count": 8,
+          "success": false,
+          "wall_time_seconds": 0.0
+        },
+        {
+          "checkpoint_step": 2,
+          "fill_in_delta": 0.0,
+          "final_density": 1.0,
+          "final_is_rref": false,
+          "initial_density": 1.0,
+          "invalid_action_breakdown": {
+            "op_kind": 1,
+            "op_scalar": 0,
+            "op_source": 0
+          },
+          "invalid_action_count": 1,
+          "masked_action_count": 1,
+          "max_density": 1.0,
+          "predicate_wall_time_seconds": 0.0,
+          "replay_ok": true,
+          "replay_wall_time_seconds": 0.0,
+          "rollout_wall_time_seconds": 0.0,
+          "sample_index": 2,
+          "seed": null,
+          "status": "max_steps_exceeded",
+          "step_count": 8,
+          "success": false,
+          "wall_time_seconds": 0.0
+        },
+        {
+          "checkpoint_step": 2,
+          "fill_in_delta": 0.0,
+          "final_density": 1.0,
+          "final_is_rref": false,
+          "initial_density": 1.0,
+          "invalid_action_breakdown": {
+            "op_kind": 2,
+            "op_scalar": 0,
+            "op_source": 1
+          },
+          "invalid_action_count": 3,
+          "masked_action_count": 3,
+          "max_density": 1.0,
+          "predicate_wall_time_seconds": 0.0,
+          "replay_ok": true,
+          "replay_wall_time_seconds": 0.0,
+          "rollout_wall_time_seconds": 0.0,
+          "sample_index": 3,
+          "seed": null,
+          "status": "max_steps_exceeded",
+          "step_count": 8,
+          "success": false,
+          "wall_time_seconds": 0.0
+        }
+      ]
+    }
+  },
+  "rows": 8,
+  "source": "shard",
+  "status": "ok"
+}

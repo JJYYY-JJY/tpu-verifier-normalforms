@@ -1,0 +1,709 @@
+{
+  "artifacts": {
+    "metrics": "metrics.json",
+    "plots": {
+      "fill_in_delta": "plots/fill_in_delta.png",
+      "hnf_coefficient_growth": "plots/hnf_coefficient_growth.png",
+      "success_rate": "plots/success_rate.png",
+      "trace_or_step_length": "plots/trace_or_step_length.png"
+    },
+    "report": "report.md"
+  },
+  "benchmarks": [
+    {
+      "kind": "rref",
+      "label": "rref_generated_dense",
+      "metadata": {
+        "family": "dense"
+      },
+      "payload": {
+        "cols": 3,
+        "count": 2,
+        "modulus": 5,
+        "policies": {
+          "leftmost": {
+            "aggregate": {
+              "mean_fill_in_delta": 0.0,
+              "mean_final_density": 0.3333333333333333,
+              "mean_initial_density": 0.8333333333333333,
+              "mean_max_density": 0.8333333333333333,
+              "mean_predicate_wall_time_seconds": 0.0,
+              "mean_rank": 3.0,
+              "mean_replay_wall_time_seconds": 0.0,
+              "mean_teacher_wall_time_seconds": 0.0,
+              "mean_trace_length": 8.5,
+              "mean_wall_time_seconds": 0.0,
+              "sample_count": 2,
+              "status_counts": {
+                "success": 2
+              },
+              "success_count": 2,
+              "success_rate": 1.0
+            },
+            "samples": [
+              {
+                "fill_in_delta": 0.0,
+                "final_density": 0.3333333333333333,
+                "final_is_rref": true,
+                "initial_density": 0.8888888888888888,
+                "max_density": 0.8888888888888888,
+                "predicate_wall_time_seconds": 0.0,
+                "rank": 3,
+                "replay_ok": true,
+                "replay_wall_time_seconds": 0.0,
+                "sample_index": 0,
+                "seed": 0,
+                "status": "success",
+                "success": true,
+                "teacher_wall_time_seconds": 0.0,
+                "trace_length": 9,
+                "wall_time_seconds": 0.0
+              },
+              {
+                "fill_in_delta": 0.0,
+                "final_density": 0.3333333333333333,
+                "final_is_rref": true,
+                "initial_density": 0.7777777777777778,
+                "max_density": 0.7777777777777778,
+                "predicate_wall_time_seconds": 0.0,
+                "rank": 3,
+                "replay_ok": true,
+                "replay_wall_time_seconds": 0.0,
+                "sample_index": 1,
+                "seed": 1,
+                "status": "success",
+                "success": true,
+                "teacher_wall_time_seconds": 0.0,
+                "trace_length": 8,
+                "wall_time_seconds": 0.0
+              }
+            ]
+          }
+        },
+        "rows": 3,
+        "source": "generated",
+        "status": "ok"
+      }
+    },
+    {
+      "kind": "rref",
+      "label": "rref_generated_sparse",
+      "metadata": {
+        "density": 0.3,
+        "family": "sparse"
+      },
+      "payload": {
+        "cols": 3,
+        "count": 2,
+        "modulus": 5,
+        "policies": {
+          "leftmost": {
+            "aggregate": {
+              "mean_fill_in_delta": 0.0,
+              "mean_final_density": 0.2222222222222222,
+              "mean_initial_density": 0.2777777777777778,
+              "mean_max_density": 0.2777777777777778,
+              "mean_predicate_wall_time_seconds": 0.0,
+              "mean_rank": 2.0,
+              "mean_replay_wall_time_seconds": 0.0,
+              "mean_teacher_wall_time_seconds": 0.0,
+              "mean_trace_length": 3.5,
+              "mean_wall_time_seconds": 0.0,
+              "sample_count": 2,
+              "status_counts": {
+                "success": 2
+              },
+              "success_count": 2,
+              "success_rate": 1.0
+            },
+            "samples": [
+              {
+                "fill_in_delta": 0.0,
+                "final_density": 0.1111111111111111,
+                "final_is_rref": true,
+                "initial_density": 0.1111111111111111,
+                "max_density": 0.1111111111111111,
+                "predicate_wall_time_seconds": 0.0,
+                "rank": 1,
+                "replay_ok": true,
+                "replay_wall_time_seconds": 0.0,
+                "sample_index": 0,
+                "seed": 0,
+                "status": "success",
+                "success": true,
+                "teacher_wall_time_seconds": 0.0,
+                "trace_length": 2,
+                "wall_time_seconds": 0.0
+              },
+              {
+                "fill_in_delta": 0.0,
+                "final_density": 0.3333333333333333,
+                "final_is_rref": true,
+                "initial_density": 0.4444444444444444,
+                "max_density": 0.4444444444444444,
+                "predicate_wall_time_seconds": 0.0,
+                "rank": 3,
+                "replay_ok": true,
+                "replay_wall_time_seconds": 0.0,
+                "sample_index": 1,
+                "seed": 1,
+                "status": "success",
+                "success": true,
+                "teacher_wall_time_seconds": 0.0,
+                "trace_length": 5,
+                "wall_time_seconds": 0.0
+              }
+            ]
+          }
+        },
+        "rows": 3,
+        "source": "generated",
+        "status": "ok"
+      }
+    },
+    {
+      "kind": "rref",
+      "label": "rref_generated_low_rank",
+      "metadata": {
+        "family": "low_rank",
+        "rank": 2
+      },
+      "payload": {
+        "cols": 3,
+        "count": 2,
+        "modulus": 5,
+        "policies": {
+          "leftmost": {
+            "aggregate": {
+              "mean_fill_in_delta": 0.05555555555555558,
+              "mean_final_density": 0.38888888888888884,
+              "mean_initial_density": 0.6666666666666666,
+              "mean_max_density": 0.7222222222222222,
+              "mean_predicate_wall_time_seconds": 0.0,
+              "mean_rank": 2.0,
+              "mean_replay_wall_time_seconds": 0.0,
+              "mean_teacher_wall_time_seconds": 0.0,
+              "mean_trace_length": 6.0,
+              "mean_wall_time_seconds": 0.0,
+              "sample_count": 2,
+              "status_counts": {
+                "success": 2
+              },
+              "success_count": 2,
+              "success_rate": 1.0
+            },
+            "samples": [
+              {
+                "fill_in_delta": 0.11111111111111116,
+                "final_density": 0.3333333333333333,
+                "final_is_rref": true,
+                "initial_density": 0.6666666666666666,
+                "max_density": 0.7777777777777778,
+                "predicate_wall_time_seconds": 0.0,
+                "rank": 2,
+                "replay_ok": true,
+                "replay_wall_time_seconds": 0.0,
+                "sample_index": 0,
+                "seed": 0,
+                "status": "success",
+                "success": true,
+                "teacher_wall_time_seconds": 0.0,
+                "trace_length": 6,
+                "wall_time_seconds": 0.0
+              },
+              {
+                "fill_in_delta": 0.0,
+                "final_density": 0.4444444444444444,
+                "final_is_rref": true,
+                "initial_density": 0.6666666666666666,
+                "max_density": 0.6666666666666666,
+                "predicate_wall_time_seconds": 0.0,
+                "rank": 2,
+                "replay_ok": true,
+                "replay_wall_time_seconds": 0.0,
+                "sample_index": 1,
+                "seed": 1,
+                "status": "success",
+                "success": true,
+                "teacher_wall_time_seconds": 0.0,
+                "trace_length": 6,
+                "wall_time_seconds": 0.0
+              }
+            ]
+          }
+        },
+        "rows": 3,
+        "source": "generated",
+        "status": "ok"
+      }
+    },
+    {
+      "kind": "hnf",
+      "label": "hnf_generated_sparse_integer",
+      "metadata": {
+        "family": "sparse_integer"
+      },
+      "payload": {
+        "aggregate": {
+          "max_growth_denominator": 5,
+          "max_growth_numerator": 5,
+          "max_initial_bitlength": 3,
+          "max_initial_max_abs": 5,
+          "max_max_abs_seen": 5,
+          "max_max_bitlength": 3,
+          "max_step_count": 2,
+          "mean_fill_in_delta": 0.0,
+          "mean_final_density": 0.16666666666666666,
+          "mean_hnf_wall_time_seconds": 0.0,
+          "mean_initial_density": 0.2777777777777778,
+          "mean_invalid_action_count": 0.0,
+          "mean_masked_action_count": 0.0,
+          "mean_max_density": 0.2777777777777778,
+          "mean_predicate_wall_time_seconds": 0.0,
+          "mean_replay_wall_time_seconds": 0.0,
+          "mean_step_count": 1.5,
+          "mean_trace_length": 1.5,
+          "mean_wall_time_seconds": 0.0,
+          "sample_count": 2,
+          "status_counts": {
+            "success": 2
+          },
+          "success_count": 2,
+          "success_rate": 1.0
+        },
+        "cols": 3,
+        "count": 2,
+        "density": 0.3,
+        "entry_bound": 5,
+        "family": "sparse_integer",
+        "policies": {
+          "row_hnf": {
+            "aggregate": {
+              "max_growth_denominator": 5,
+              "max_growth_numerator": 5,
+              "max_initial_bitlength": 3,
+              "max_initial_max_abs": 5,
+              "max_max_abs_seen": 5,
+              "max_max_bitlength": 3,
+              "max_step_count": 2,
+              "mean_fill_in_delta": 0.0,
+              "mean_final_density": 0.16666666666666666,
+              "mean_hnf_wall_time_seconds": 0.0,
+              "mean_initial_density": 0.2777777777777778,
+              "mean_invalid_action_count": 0.0,
+              "mean_masked_action_count": 0.0,
+              "mean_max_density": 0.2777777777777778,
+              "mean_predicate_wall_time_seconds": 0.0,
+              "mean_replay_wall_time_seconds": 0.0,
+              "mean_step_count": 1.5,
+              "mean_trace_length": 1.5,
+              "mean_wall_time_seconds": 0.0,
+              "sample_count": 2,
+              "status_counts": {
+                "success": 2
+              },
+              "success_count": 2,
+              "success_rate": 1.0
+            },
+            "samples": [
+              {
+                "fill_in_delta": 0.0,
+                "final_density": 0.1111111111111111,
+                "final_is_hnf": true,
+                "growth_denominator": 5,
+                "growth_numerator": 5,
+                "hnf_wall_time_seconds": 0.0,
+                "initial_bitlength": 3,
+                "initial_density": 0.1111111111111111,
+                "initial_max_abs": 5,
+                "max_abs_seen": 5,
+                "max_bitlength": 3,
+                "max_density": 0.1111111111111111,
+                "predicate_wall_time_seconds": 0.0,
+                "replay_ok": true,
+                "replay_wall_time_seconds": 0.0,
+                "sample_index": 0,
+                "seed": 0,
+                "status": "success",
+                "step_count": 1,
+                "success": true,
+                "trace_length": 1,
+                "wall_time_seconds": 0.0
+              },
+              {
+                "fill_in_delta": 0.0,
+                "final_density": 0.2222222222222222,
+                "final_is_hnf": true,
+                "growth_denominator": 4,
+                "growth_numerator": 4,
+                "hnf_wall_time_seconds": 0.0,
+                "initial_bitlength": 3,
+                "initial_density": 0.4444444444444444,
+                "initial_max_abs": 4,
+                "max_abs_seen": 4,
+                "max_bitlength": 3,
+                "max_density": 0.4444444444444444,
+                "predicate_wall_time_seconds": 0.0,
+                "replay_ok": true,
+                "replay_wall_time_seconds": 0.0,
+                "sample_index": 1,
+                "seed": 1,
+                "status": "success",
+                "step_count": 2,
+                "success": true,
+                "trace_length": 2,
+                "wall_time_seconds": 0.0
+              }
+            ]
+          }
+        },
+        "rows": 3,
+        "samples": [
+          {
+            "fill_in_delta": 0.0,
+            "final_density": 0.1111111111111111,
+            "final_is_hnf": true,
+            "growth_denominator": 5,
+            "growth_numerator": 5,
+            "hnf_wall_time_seconds": 0.0,
+            "initial_bitlength": 3,
+            "initial_density": 0.1111111111111111,
+            "initial_max_abs": 5,
+            "max_abs_seen": 5,
+            "max_bitlength": 3,
+            "max_density": 0.1111111111111111,
+            "predicate_wall_time_seconds": 0.0,
+            "replay_ok": true,
+            "replay_wall_time_seconds": 0.0,
+            "sample_index": 0,
+            "seed": 0,
+            "status": "success",
+            "step_count": 1,
+            "success": true,
+            "trace_length": 1,
+            "wall_time_seconds": 0.0
+          },
+          {
+            "fill_in_delta": 0.0,
+            "final_density": 0.2222222222222222,
+            "final_is_hnf": true,
+            "growth_denominator": 4,
+            "growth_numerator": 4,
+            "hnf_wall_time_seconds": 0.0,
+            "initial_bitlength": 3,
+            "initial_density": 0.4444444444444444,
+            "initial_max_abs": 4,
+            "max_abs_seen": 4,
+            "max_bitlength": 3,
+            "max_density": 0.4444444444444444,
+            "predicate_wall_time_seconds": 0.0,
+            "replay_ok": true,
+            "replay_wall_time_seconds": 0.0,
+            "sample_index": 1,
+            "seed": 1,
+            "status": "success",
+            "step_count": 2,
+            "success": true,
+            "trace_length": 2,
+            "wall_time_seconds": 0.0
+          }
+        ],
+        "seed_start": 0,
+        "source": "generated",
+        "status": "ok"
+      }
+    },
+    {
+      "kind": "snf",
+      "label": "snf_generated_certificates",
+      "metadata": {
+        "family": "snf_certificate"
+      },
+      "payload": {
+        "col_op_count": 2,
+        "cols": 3,
+        "count": 2,
+        "diagonal_factor_bound": 5,
+        "family": "snf_certificate",
+        "op_scalar_bound": 3,
+        "policies": {
+          "certificate_replay": {
+            "aggregate": {
+              "max_initial_bitlength": 5,
+              "max_initial_max_abs": 16,
+              "max_max_abs_seen": 16,
+              "max_max_bitlength": 5,
+              "mean_col_op_count": 2.0,
+              "mean_fill_in_delta": 0.0,
+              "mean_final_density": 0.3333333333333333,
+              "mean_initial_density": 0.3333333333333333,
+              "mean_max_density": 0.3333333333333333,
+              "mean_operation_count": 4.0,
+              "mean_replay_wall_time_seconds": 0.0,
+              "mean_row_op_count": 2.0,
+              "mean_verify_wall_time_seconds": 0.0,
+              "mean_wall_time_seconds": 0.0,
+              "sample_count": 2,
+              "status_counts": {
+                "success": 2
+              },
+              "success_count": 2,
+              "success_rate": 1.0
+            },
+            "samples": [
+              {
+                "col_op_count": 2,
+                "fill_in_delta": 0.0,
+                "final_density": 0.3333333333333333,
+                "initial_bitlength": 5,
+                "initial_density": 0.3333333333333333,
+                "initial_max_abs": 16,
+                "max_abs_seen": 16,
+                "max_bitlength": 5,
+                "max_density": 0.3333333333333333,
+                "operation_count": 4,
+                "replay_ok": true,
+                "replay_wall_time_seconds": 0.0,
+                "row_op_count": 2,
+                "sample_index": 0,
+                "seed": 0,
+                "status": "success",
+                "success": true,
+                "verified": true,
+                "verify_wall_time_seconds": 0.0,
+                "wall_time_seconds": 0.0
+              },
+              {
+                "col_op_count": 2,
+                "fill_in_delta": 0.0,
+                "final_density": 0.3333333333333333,
+                "initial_bitlength": 4,
+                "initial_density": 0.3333333333333333,
+                "initial_max_abs": 10,
+                "max_abs_seen": 10,
+                "max_bitlength": 4,
+                "max_density": 0.3333333333333333,
+                "operation_count": 4,
+                "replay_ok": true,
+                "replay_wall_time_seconds": 0.0,
+                "row_op_count": 2,
+                "sample_index": 1,
+                "seed": 1,
+                "status": "success",
+                "success": true,
+                "verified": true,
+                "verify_wall_time_seconds": 0.0,
+                "wall_time_seconds": 0.0
+              }
+            ]
+          }
+        },
+        "row_op_count": 2,
+        "rows": 3,
+        "seed_start": 0,
+        "source": "generated",
+        "status": "ok"
+      }
+    }
+  ],
+  "hnf_coefficient_rows": [
+    {
+      "benchmark": "hnf_generated_sparse_integer:row_hnf",
+      "growth_denominator": 5,
+      "growth_numerator": 5,
+      "initial_bitlength": 3,
+      "initial_max_abs": 5,
+      "max_abs_seen": 5,
+      "max_bitlength": 3,
+      "step_count": 2
+    }
+  ],
+  "normalized_rows": [
+    {
+      "benchmark": "rref_generated_dense",
+      "family": "dense",
+      "kind": "rref",
+      "mean_fill_in_delta": 0.0,
+      "mean_final_density": 0.3333333333333333,
+      "mean_initial_density": 0.8333333333333333,
+      "mean_invalid_action_count": 0.0,
+      "mean_masked_action_count": 0.0,
+      "mean_max_density": 0.8333333333333333,
+      "mean_rank": 3.0,
+      "mean_step_or_trace_length": 8.5,
+      "mean_wall_time_seconds": 0.0,
+      "modulus": 5,
+      "policy": "leftmost",
+      "sample_count": 2,
+      "source": "generated",
+      "status_counts": {
+        "success": 2
+      },
+      "success_count": 2,
+      "success_rate": 1.0
+    },
+    {
+      "benchmark": "rref_generated_sparse",
+      "family": "sparse",
+      "kind": "rref",
+      "mean_fill_in_delta": 0.0,
+      "mean_final_density": 0.2222222222222222,
+      "mean_initial_density": 0.2777777777777778,
+      "mean_invalid_action_count": 0.0,
+      "mean_masked_action_count": 0.0,
+      "mean_max_density": 0.2777777777777778,
+      "mean_rank": 2.0,
+      "mean_step_or_trace_length": 3.5,
+      "mean_wall_time_seconds": 0.0,
+      "modulus": 5,
+      "policy": "leftmost",
+      "sample_count": 2,
+      "source": "generated",
+      "status_counts": {
+        "success": 2
+      },
+      "success_count": 2,
+      "success_rate": 1.0
+    },
+    {
+      "benchmark": "rref_generated_low_rank",
+      "family": "low_rank",
+      "kind": "rref",
+      "mean_fill_in_delta": 0.05555555555555558,
+      "mean_final_density": 0.38888888888888884,
+      "mean_initial_density": 0.6666666666666666,
+      "mean_invalid_action_count": 0.0,
+      "mean_masked_action_count": 0.0,
+      "mean_max_density": 0.7222222222222222,
+      "mean_rank": 2.0,
+      "mean_step_or_trace_length": 6.0,
+      "mean_wall_time_seconds": 0.0,
+      "modulus": 5,
+      "policy": "leftmost",
+      "sample_count": 2,
+      "source": "generated",
+      "status_counts": {
+        "success": 2
+      },
+      "success_count": 2,
+      "success_rate": 1.0
+    },
+    {
+      "benchmark": "hnf_generated_sparse_integer",
+      "family": "sparse_integer",
+      "kind": "hnf",
+      "mean_fill_in_delta": 0.0,
+      "mean_final_density": 0.16666666666666666,
+      "mean_initial_density": 0.2777777777777778,
+      "mean_invalid_action_count": 0.0,
+      "mean_masked_action_count": 0.0,
+      "mean_max_density": 0.2777777777777778,
+      "mean_rank": "",
+      "mean_step_or_trace_length": 1.5,
+      "mean_wall_time_seconds": 0.0,
+      "modulus": "",
+      "policy": "row_hnf",
+      "sample_count": 2,
+      "source": "generated",
+      "status_counts": {
+        "success": 2
+      },
+      "success_count": 2,
+      "success_rate": 1.0
+    },
+    {
+      "benchmark": "snf_generated_certificates",
+      "family": "snf_certificate",
+      "kind": "snf",
+      "mean_fill_in_delta": 0.0,
+      "mean_final_density": 0.3333333333333333,
+      "mean_initial_density": 0.3333333333333333,
+      "mean_invalid_action_count": 0.0,
+      "mean_masked_action_count": 0.0,
+      "mean_max_density": 0.3333333333333333,
+      "mean_rank": "",
+      "mean_step_or_trace_length": 4.0,
+      "mean_wall_time_seconds": 0.0,
+      "modulus": "",
+      "policy": "certificate_replay",
+      "sample_count": 2,
+      "source": "generated",
+      "status_counts": {
+        "success": 2
+      },
+      "success_count": 2,
+      "success_rate": 1.0
+    }
+  ],
+  "provenance": {
+    "generated_at_utc": "normalized",
+    "input_json_paths": [],
+    "mode": "run",
+    "run_config": {
+      "cols": 3,
+      "hnf_entry_bound": 5,
+      "low_rank": 2,
+      "p": 5,
+      "rows": 3,
+      "rref_checkpoint": null,
+      "rref_model_data": null,
+      "sample_count": 2,
+      "seed_start": 0,
+      "sparse_density": 0.3
+    },
+    "suite": "paper-smoke"
+  },
+  "schema_version": 1,
+  "suite_rows": [
+    {
+      "benchmark": "rref_generated_dense",
+      "family": "dense",
+      "kind": "rref",
+      "modulus": 5,
+      "policies": "leftmost",
+      "samples": 2,
+      "shape": "3x3",
+      "source": "generated"
+    },
+    {
+      "benchmark": "rref_generated_sparse",
+      "family": "sparse",
+      "kind": "rref",
+      "modulus": 5,
+      "policies": "leftmost",
+      "samples": 2,
+      "shape": "3x3",
+      "source": "generated"
+    },
+    {
+      "benchmark": "rref_generated_low_rank",
+      "family": "low_rank",
+      "kind": "rref",
+      "modulus": 5,
+      "policies": "leftmost",
+      "samples": 2,
+      "shape": "3x3",
+      "source": "generated"
+    },
+    {
+      "benchmark": "hnf_generated_sparse_integer",
+      "family": "sparse_integer",
+      "kind": "hnf",
+      "modulus": "",
+      "policies": "row_hnf",
+      "samples": 2,
+      "shape": "3x3",
+      "source": "generated"
+    },
+    {
+      "benchmark": "snf_generated_certificates",
+      "family": "snf_certificate",
+      "kind": "snf",
+      "modulus": "",
+      "policies": "certificate_replay",
+      "samples": 2,
+      "shape": "3x3",
+      "source": "generated"
+    }
+  ]
+}

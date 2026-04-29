@@ -1,0 +1,63 @@
+{
+  "benchmark_count": 1,
+  "config": {
+    "actor_critic_steps": 1,
+    "batch_size": 2,
+    "beam_width": 8,
+    "benchmark_max_steps": 2,
+    "dagger_iterations": 1,
+    "density": 0.5,
+    "entry_bound": 4,
+    "hidden_sizes": [
+      16
+    ],
+    "learning_rate": 0.001,
+    "run_seed_count": 1,
+    "samples_per_size": 2,
+    "sizes": [
+      3
+    ],
+    "train_steps": 1
+  },
+  "generated_at_utc": "normalized",
+  "run_rows": [
+    {
+      "beam_mean_step_count": 1.5,
+      "beam_success_rate": 0.5,
+      "run_seed": 0,
+      "size": 3,
+      "supervised_mean_step_count": 2.0,
+      "supervised_success_rate": 0.0
+    }
+  ],
+  "schema_version": "hnf-v08-experiment-metrics-v1",
+  "size_rows": [
+    {
+      "beam_mean_step_count": 1.5,
+      "beam_success_rate": 0.5,
+      "size": 3,
+      "supervised_mean_step_count": 2.0,
+      "supervised_success_rate": 0.0
+    }
+  ],
+  "status": "ok",
+  "threshold": {
+    "baseline_policy": "supervised_greedy",
+    "candidate_policy": "dagger_actor_critic_beam",
+    "mean_step_count_ratio": 0.9,
+    "success_rate_delta": 0.05
+  },
+  "threshold_verdict": {
+    "passed": true,
+    "per_size": [
+      {
+        "passed": true,
+        "size": 3,
+        "step_ok": true,
+        "step_ratio": 0.75,
+        "success_delta": 0.5,
+        "success_ok": true
+      }
+    ]
+  }
+}
