@@ -105,8 +105,21 @@ def test_tracked_pre_colab_fixtures_are_compact_json() -> None:
     manifest = json.loads((fixture_dir / "manifest.json").read_text())
     assert manifest["schema_version"] == "pre-colab-preflight-manifest-v1"
     assert manifest["overall_status"] == "ok"
+    assert str(manifest["versions"]["python"]).startswith("3.12.")
     assert manifest["artifacts"]["rref_shard_benchmark"].endswith(
         "rref_shard_benchmark_smoke.json"
     )
+    assert manifest["verdicts"]["rref_shard_benchmark"]["status"] == "ok"
+    assert {"leftmost", "neural"} <= set(
+        manifest["verdicts"]["rref_shard_benchmark"]["policies"]
+    )
     assert manifest["verdicts"]["hnf_v08"]["status"] in {"ok", "failed_threshold"}
-    assert "certificate_replay" in manifest["verdicts"]["snf_benchmark"]["policies"]
+    assert manifest["verdicts"]["snf_benchmark"]["status"] == "ok"
+    assert (
+        manifest["verdicts"]["snf_benchmark"]["policies"]["certificate_replay"][
+            "success_rate"
+        ]
+        == 1.0
+    )
+    assert manifest["verdicts"]["report_smoke"]["status"] == "ok"
+    assert all(command["exit_code"] == 0 for command in manifest["commands"])

@@ -208,7 +208,7 @@
       "stdout_path": "/tmp/nf-pre-colab/logs/lean_build.stdout"
     }
   ],
-  "git_commit": "c792f5fb1d6b5c12eb9aa02c79f01749978cfbde",
+  "git_commit": "bf99ea9da22245fbd0908abe2f17df7af1b49fb4",
   "overall_status": "ok",
   "schema_version": "pre-colab-preflight-manifest-v1",
   "verdicts": {
@@ -273,7 +273,7 @@
   "versions": {
     "lake": "Lake version 5.0.0-src+3dc1a08 (Lean version 4.30.0-rc2)",
     "lean": "Lean (version 4.30.0-rc2, arm64-apple-darwin24.6.0, commit 3dc1a088b6d2d8eafe25a7cd7ec7b58d731bd7cc, Release)",
-    "python": "3.11.15"
+    "python": "3.12.13"
   },
   "work_dir": "/tmp/nf-pre-colab"
 }
