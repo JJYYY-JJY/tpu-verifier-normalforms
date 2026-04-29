@@ -101,6 +101,8 @@ nf-agent benchmark hnf \
   --density 0.2 \
   --entry-bound 9 \
   --seed-start 0
+nf-agent report benchmark \
+  --out-dir /tmp/nf-v0.7-report
 nf-agent benchmark rref \
   --source shard \
   --data /tmp/rref_8x8_smoke.npz \
@@ -167,6 +169,20 @@ scalar)` with distinct target/source rows. Coefficient-growth metrics are exact
 integers: `initial_max_abs`, `max_abs_seen`, `initial_bitlength`,
 `max_bitlength`, `growth_numerator`, `growth_denominator`, and `step_count`.
 
+The paper-style benchmark report command writes a reproducible report directory:
+
+```bash
+nf-agent report benchmark --out-dir /tmp/nf-v0.7-report
+```
+
+Without `--input-json`, it runs the built-in `paper-smoke` suite: generated RREF
+dense, sparse, and low-rank samples plus generated sparse integer HNF samples.
+With one or more `--input-json PATH` options, it only summarizes existing compact
+RREF/HNF benchmark JSON. The output directory contains `report.md`,
+`metrics.json`, and `plots/*.png`. Neural RREF policy rows appear only when the
+input benchmark data includes neural rollout metrics or when run mode receives
+both `--rref-checkpoint` and `--rref-model-data`.
+
 ## Roadmap
 
 - `v0.2`: fixed-shape NPZ shards, `PivotMLP`, JAX/Flax/Optax imitation
@@ -181,6 +197,7 @@ integers: `initial_max_abs`, `max_abs_seen`, `initial_bitlength`,
 - `v0.5`: SNF certificates with `(D,U,V)` and trace replay.
 - `v0.6`: Lean checker for small exported RREF JSON certificates; SNF Lean
   checker follow-up.
-- `v0.7`: paper-style benchmark report.
+- `v0.7`: paper-style RREF/HNF benchmark report with Markdown, machine JSON,
+  and PNG plots.
 - `v0.8`: HNF training/rollout, DAgger, policy gradient, and verifier beam
   search as explicit experimental branches.

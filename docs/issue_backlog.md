@@ -18,3 +18,4 @@
 - [done] [lean] Initialize Lake workspace for certificate checker
 - [done] [lean] Add RREF JSON certificate checker
 - [done] [docs] Write design.md and benchmark_protocol.md
+- [done] [report] Add paper-style benchmark report

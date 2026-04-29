@@ -132,3 +132,46 @@ Matrix families:
 
 No benchmark may replace a failed neural rollout with a deterministic teacher
 without reporting the rollout as failed.
+
+## Paper-Style Report
+
+`nf-agent report benchmark --out-dir PATH` writes the v0.7 benchmark report
+artifacts:
+
+- `report.md`: human-readable Markdown with provenance, exactness/no-fallback
+  statement, suite table, aggregate correctness/timing/fill-in tables, HNF
+  coefficient-growth table, plot links, and limitations.
+- `metrics.json`: raw compact benchmark payloads, normalized table rows,
+  coefficient-growth rows, provenance, and artifact paths.
+- `plots/*.png`: success rate, trace/step length, fill-in delta, and HNF
+  coefficient-growth plots. `neural_invalid_actions.png` is written only when a
+  neural RREF policy is present.
+
+Run mode is selected when no `--input-json` is provided. The only built-in suite
+in this slice is `paper-smoke`, with defaults:
+
+- `--sample-count 16`
+- `--rows 8`
+- `--cols 8`
+- `--p 101`
+- `--seed-start 0`
+- `--sparse-density 0.2`
+- `--low-rank 3`
+- `--hnf-entry-bound 9`
+
+Run mode benchmarks generated RREF dense, sparse, and low-rank families plus
+generated sparse integer HNF. RREF neural rows are included only when both
+`--rref-checkpoint` and `--rref-model-data` are supplied and the model-data
+metadata matches the generated RREF suite.
+
+Summary mode is selected by one or more `--input-json PATH` options. It does not
+run benchmarks; it only summarizes existing compact JSON emitted by
+`nf-agent benchmark rref` and `nf-agent benchmark hnf`. Unknown JSON shapes and
+non-compact samples containing full matrices or row-operation traces are
+rejected.
+
+Report averages and plots may use numeric benchmark metrics already emitted by
+the benchmark harness. Verifier paths remain exact: no floating point is used in
+certificate replay, row-operation replay, or normal-form predicates. Failed
+neural rollouts remain failed neural rows; the report never replaces them with
+deterministic teacher traces.
