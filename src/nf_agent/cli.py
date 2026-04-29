@@ -485,6 +485,46 @@ def rollout_rref_neural(
     _emit_json(result.as_json_dict())
 
 
+@rollout.command("rref-matrixformer")
+@click.option("--data", "data_path", type=click.Path(dir_okay=False), required=True)
+@click.option("--checkpoint", "checkpoint_dir", type=click.Path(file_okay=False), required=True)
+@click.option("--sample-index", type=int, required=True)
+@click.option("--max-steps", type=int, default=None)
+@click.option("--row-embedding-dim", type=int, default=32, show_default=True)
+@click.option("--col-embedding-dim", type=int, default=32, show_default=True)
+@click.option("--hidden-dim", type=int, default=256, show_default=True)
+@click.option("--layers", type=int, default=2, show_default=True)
+@click.option("--num-heads", type=int, default=4, show_default=True)
+def rollout_rref_matrixformer(
+    data_path: str,
+    checkpoint_dir: str,
+    sample_index: int,
+    max_steps: int | None,
+    row_embedding_dim: int,
+    col_embedding_dim: int,
+    hidden_dim: int,
+    layers: int,
+    num_heads: int,
+) -> None:
+    try:
+        result = rollout_rref_matrixformer_sample(
+            RREFMatrixFormerRolloutConfig(
+                data_path=data_path,
+                checkpoint_dir=checkpoint_dir,
+                sample_index=sample_index,
+                max_steps=max_steps,
+                row_embedding_dim=row_embedding_dim,
+                col_embedding_dim=col_embedding_dim,
+                hidden_dim=hidden_dim,
+                layers=layers,
+                num_heads=num_heads,
+            )
+        )
+    except (TypeError, ValueError, IndexError, ZeroDivisionError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(result.as_json_dict())
+
+
 @rollout.command("hnf-neural")
 @click.option("--data", "data_path", type=click.Path(dir_okay=False), required=True)
 @click.option("--checkpoint", "checkpoint_dir", type=click.Path(file_okay=False), required=True)

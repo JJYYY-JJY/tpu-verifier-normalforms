@@ -15,6 +15,13 @@ from nf_agent.rollout.hnf_neural import (
     rollout_hnf_policy_with_logits,
     rollout_hnf_policy_with_runtime,
 )
+from nf_agent.rollout.rref_matrixformer import (
+    RREFMatrixFormerRolloutConfig,
+    RREFMatrixFormerRolloutResult,
+    rollout_rref_matrixformer,
+    rollout_rref_matrixformer_sample,
+    rollout_rref_matrixformer_with_logits,
+)
 from nf_agent.rollout.rref_neural import (
     RREFPivotRolloutConfig,
     RREFPivotRolloutResult,
@@ -29,6 +36,8 @@ __all__ = [
     "HNFRolloutConfig",
     "HNFRolloutResult",
     "HNFRolloutStatus",
+    "RREFMatrixFormerRolloutConfig",
+    "RREFMatrixFormerRolloutResult",
     "RREFPivotRolloutConfig",
     "RREFPivotRolloutResult",
     "load_hnf_policy_runtime",
@@ -39,6 +48,9 @@ __all__ = [
     "rollout_hnf_policy_sample",
     "rollout_hnf_policy_with_runtime",
     "rollout_hnf_policy_with_logits",
+    "rollout_rref_matrixformer",
+    "rollout_rref_matrixformer_sample",
+    "rollout_rref_matrixformer_with_logits",
     "rollout_rref_pivot",
     "rollout_rref_pivot_sample",
     "rollout_rref_pivot_with_logits",
