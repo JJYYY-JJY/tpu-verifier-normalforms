@@ -4,6 +4,10 @@ This runbook records large RREF 8x8/F_101 measured runs without tracking NPZ
 shards, checkpoints, raw logs, or Colab PDFs. The tracked artifacts are compact
 JSON plus Markdown summaries under `results/measured/`.
 
+For Colab, open `notebooks/rref_v6e_measured_run.ipynb`. It clones the repo,
+installs the package, asserts TPU backend, runs the measured profile, displays a
+compact summary, and downloads the two `/tmp` result files.
+
 The harness uses the same verifier-first path as the smoke notebook:
 
 - Shard generation calls the explicit RREF teacher as a dataset source.
