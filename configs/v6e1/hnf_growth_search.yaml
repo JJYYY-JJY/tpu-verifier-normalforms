@@ -1,4 +1,4 @@
-# Planned v6e1 config. Current CLI does not consume this file yet.
+# v1.1 HNF growth-search alpha config consumed by `nf-agent profile hnf-growth`.
 task: hnf_growth_search
 integer_families:
   - name: sparse_8x8

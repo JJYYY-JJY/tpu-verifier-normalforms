@@ -266,8 +266,10 @@ PY
 See `docs/trajectory_shards.md` for the fixed NPZ schemas; RREF backward and
 state/action shards also support Zarr storage with the same arrays and metadata.
 RREF shards support teachers (`leftmost`, `min_fill`). HNF shards use `row_hnf`
-as an explicit oracle/dataset source and encode integer row operations over a shard-local
-scalar vocabulary.
+as an explicit oracle/dataset source and encode integer row operations over a
+shard-local scalar vocabulary; the HNF growth-search alpha adds
+`hnf-backward-trace-zarr-v1` plus `nf-agent profile hnf-growth` compact
+summaries.
 
 RREF backward trace shards use `rref-backward-trace-npz-v1`: each sample starts
 from a canonical exact RREF final, applies sampled invertible row operations to
@@ -281,8 +283,8 @@ are expanded into one flat `(state, action)` supervised example per row op plus
 one terminal stop example per trace. The shard also keeps trace-shaped tensors
 for replay checks. The alpha2 NPZ smoke path trains `RREFMatrixFormer` on these
 single-step examples and runs greedy `rollout rref-matrixformer` from
-`trace_states[sample_index, 0]`. Zarr ingestion, TPU batched beam/search, and
-profile runners remain deferred.
+`trace_states[sample_index, 0]`. Zarr ingestion and the local v6e profile runner
+are implemented; TPU-scale batched search remains a remote acceptance target.
 
 Check the latest local training checkpoint:
 

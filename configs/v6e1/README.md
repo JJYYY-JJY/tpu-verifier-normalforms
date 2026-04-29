@@ -11,6 +11,8 @@ The executable v1.0-beta1 RREF surface is:
 - `nf-agent train rref-matrixformer`
 - `nf-agent rollout rref-verifier-beam`
 - `nf-agent report v6e-profile`
+- `nf-agent data make-hnf-backward-shard`
+- `nf-agent profile hnf-growth`
 - `python scripts/rref_v6e_profile.py`
 
 Local Zarr smoke:
@@ -59,6 +61,17 @@ python scripts/rref_v6e_profile.py \
   --config configs/v6e1/rref_matrixformer_smoke.yaml \
   --work-dir /tmp/nf-v6e1/rref_matrixformer_smoke/work \
   --out-dir /tmp/nf-v6e1/rref_matrixformer_smoke/report
+```
+
+HNF growth-search alpha:
+
+```bash
+nf-agent profile hnf-growth \
+  --config configs/v6e1/hnf_growth_search.yaml \
+  --work-dir /tmp/nf-v6e1/hnf_growth/work \
+  --out-dir /tmp/nf-v6e1/hnf_growth/report \
+  --family sparse_8x8 \
+  --count 2
 ```
 
 Colab TPU acceptance uses `configs/v6e1/rref_large_profile.yaml`:

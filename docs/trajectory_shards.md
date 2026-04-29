@@ -52,7 +52,7 @@ seed range, matrix shape, op encoding, and padding value.
 - Shards are produced with `numpy.savez`, not compressed.
 - Generated `.npz` files under `results/data/` are ignored by git.
 
-## RREF Backward Trace NPZ Schema
+## RREF Backward Trace NPZ/Zarr Schema
 
 Use:
 
@@ -98,10 +98,11 @@ nonzero modulo `p`. The loader checks prime modulus, dtypes, shapes, padding,
 operation legality, pivots derived from `finals`, exact replay from `inputs` to
 `finals`, and `is_rref_modp(finals[i], p)`.
 
-Current executable format is NPZ only. Zarr is reserved for later large v6e
-state/action datasets.
+Executable formats are NPZ and Zarr. They carry the same arrays and
+`metadata_json`; the loader applies the same schema, padding, operation,
+pivot, replay, and final-predicate checks to both formats.
 
-## RREF State/Action NPZ Schema
+## RREF State/Action NPZ/Zarr Schema
 
 Use:
 
@@ -169,9 +170,10 @@ legal masks, flat/trace consistency, exact replay between consecutive trace
 states, and `is_rref_modp` at each terminal stop state. It never calls a
 teacher to repair or replace malformed data.
 
-Current executable format is NPZ smoke only. MatrixFormer local smoke training
-and greedy checkpoint rollout consume this shard directly. Zarr and batched
-verifier beam/search are later v6e slices.
+Executable formats are NPZ and Zarr. MatrixFormer local smoke training, greedy
+checkpoint rollout, verifier-beam rollout, and the v6e profile runner consume
+these shards directly. TPU-scale batched search remains a later v6e acceptance
+target.
 
 ## HNF NPZ Schema
 
@@ -222,3 +224,46 @@ Boundaries:
   `add(target, source, scalar)` with distinct target/source rows
 - `row_hnf` is allowed as an oracle/baseline/dataset source only; learned
   rollout and beam search report failures directly.
+
+## HNF Backward Trace NPZ/Zarr Schema
+
+Use:
+
+```bash
+nf-agent data make-hnf-backward-shard \
+  --config configs/v6e1/hnf_growth_search.yaml \
+  --family sparse_8x8 \
+  --count 1024 \
+  --seed-start 0 \
+  --out /tmp/nf-v6e1/hnf_growth/work/hnf_backward_sparse_8x8.zarr
+```
+
+Schema version: `hnf-backward-trace-zarr-v1`.
+
+Generation:
+
+```text
+sparse bounded integer matrix
+-> exact row_hnf teacher trace
+-> final row-HNF matrix
+-> integer row-op replay validation
+```
+
+Arrays match the HNF v0.8 trajectory schema:
+
+- `inputs`: `int64[N, rows, cols]`
+- `finals`: `int64[N, rows, cols]`
+- `op_kind`: `int8[N, max_ops]`
+- `op_target`: `int64[N, max_ops]`, padded with `-1`
+- `op_source`: `int64[N, max_ops]`, padded with `-1`
+- `op_scalar_id`: `int64[N, max_ops]`, padded with `-1`
+- `op_scalar_value`: `int64[N, max_ops]`, padded with `-1`
+- `op_mask`: `bool[N, max_ops]`
+- `scalar_vocab`: sorted `int64[V]`
+- `metadata_json`: JSON string
+
+`nf-agent profile hnf-growth` consumes this config, writes the shard under the
+work directory, then emits compact `summary.json` and `report.md` metrics:
+`step_count`, `max_bitlength`, `max_abs_seen`, `fill_in_delta`,
+`certificate_op_count`, and `certificate_size_entries`. Profile outputs do not
+include raw matrices, operation traces, or feature tensors.
