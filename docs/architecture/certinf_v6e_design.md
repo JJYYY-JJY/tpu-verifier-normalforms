@@ -122,8 +122,9 @@ Planned CLI surface:
 - `nf-agent profile v6e-status`
 - `nf-agent data make-rref-backward-shard` (implemented for NPZ smoke shards)
 - `nf-agent data make-rref-state-shard` (implemented for NPZ smoke shards)
-- `nf-agent train rref-matrixformer`
-- `nf-agent rollout rref-verifier-beam`
+- `nf-agent train rref-matrixformer` (implemented for NPZ smoke shards)
+- `nf-agent rollout rref-matrixformer` (implemented as local greedy NPZ smoke)
+- `nf-agent rollout rref-verifier-beam` (deferred TPU batched beam)
 - `nf-agent report v6e-profile`
 
 ## HNF v1.1 Mainline

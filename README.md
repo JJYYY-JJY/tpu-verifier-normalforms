@@ -110,6 +110,28 @@ nf-agent data make-rref-backward-shard \
 nf-agent data make-rref-state-shard \
   --trace-shard /tmp/rref_backward_4x4_smoke.npz \
   --out /tmp/rref_state_4x4_smoke.npz
+nf-agent train rref-matrixformer \
+  --data /tmp/rref_state_4x4_smoke.npz \
+  --steps 2 \
+  --batch-size 4 \
+  --learning-rate 0.001 \
+  --seed 0 \
+  --out /tmp/rref_matrixformer_smoke_ckpt \
+  --row-embedding-dim 8 \
+  --col-embedding-dim 8 \
+  --hidden-dim 32 \
+  --layers 1 \
+  --num-heads 1
+nf-agent rollout rref-matrixformer \
+  --data /tmp/rref_state_4x4_smoke.npz \
+  --checkpoint /tmp/rref_matrixformer_smoke_ckpt \
+  --sample-index 0 \
+  --max-steps 8 \
+  --row-embedding-dim 8 \
+  --col-embedding-dim 8 \
+  --hidden-dim 32 \
+  --layers 1 \
+  --num-heads 1
 nf-agent train rref-pivot \
   --data /tmp/rref_8x8_smoke.npz \
   --steps 2 \
@@ -216,8 +238,10 @@ MatrixFormer training.
 RREF state/action shards use `rref-state-action-npz-v1`: exact backward traces
 are expanded into one flat `(state, action)` supervised example per row op plus
 one terminal stop example per trace. The shard also keeps trace-shaped tensors
-for replay checks. This slice is NPZ smoke only; Zarr, MatrixFormer training,
-and batched beam/search remain deferred.
+for replay checks. The alpha2 NPZ smoke path trains `RREFMatrixFormer` on these
+single-step examples and runs greedy `rollout rref-matrixformer` from
+`trace_states[sample_index, 0]`. Zarr ingestion, TPU batched beam/search, and
+profile runners remain deferred.
 
 Check the latest local training checkpoint:
 
@@ -230,6 +254,11 @@ The neural rollout command emits JSON with `status`, `success`, `step_count`,
 `initial_matrix`, `final_matrix`, replayed `ops`, `final_is_rref`,
 `checkpoint_step`, and `modulus`. It reports failed neural rollouts directly;
 it does not call the leftmost teacher as fallback.
+
+The MatrixFormer rollout command emits the same compact status fields for a
+single-step greedy policy. Model logits are masked before exact row-operation
+replay; malformed or exhausted rollouts report explicit status instead of using
+a teacher fallback.
 
 The RREF benchmark command emits compact JSON with top-level `status`, `source`,
 `count`, `rows`, `cols`, `modulus`, and `policies`. The `leftmost` policy always

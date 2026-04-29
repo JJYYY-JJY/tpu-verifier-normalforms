@@ -169,8 +169,9 @@ legal masks, flat/trace consistency, exact replay between consecutive trace
 states, and `is_rref_modp` at each terminal stop state. It never calls a
 teacher to repair or replace malformed data.
 
-Current executable format is NPZ smoke only. Zarr, MatrixFormer training, and
-batched verifier beam/search are later v6e slices.
+Current executable format is NPZ smoke only. MatrixFormer local smoke training
+and greedy checkpoint rollout consume this shard directly. Zarr and batched
+verifier beam/search are later v6e slices.
 
 ## HNF NPZ Schema
 

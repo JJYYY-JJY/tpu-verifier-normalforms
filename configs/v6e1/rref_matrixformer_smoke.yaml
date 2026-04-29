@@ -21,9 +21,8 @@ train:
   precision: bf16
   seed: 0
 rollout:
-  command: rref-verifier-beam
-  beam_size: 4
-  batch_size: auto
+  command: rref-matrixformer
+  strategy: greedy
   max_steps: 160
 success:
   require_finite_loss: true

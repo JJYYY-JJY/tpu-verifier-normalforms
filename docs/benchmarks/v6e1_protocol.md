@@ -74,7 +74,7 @@ Local smoke:
 - 16x16 over `F_101`;
 - train 10 steps;
 - loss is finite;
-- checkpoint can be loaded by rollout;
+- checkpoint can be loaded by `rollout rref-matrixformer`;
 - rollout emits compact JSON with explicit success/failure status.
 
 Colab v6e smoke:
