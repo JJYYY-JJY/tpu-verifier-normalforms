@@ -264,6 +264,8 @@ Arrays match the HNF v0.8 trajectory schema:
 
 `nf-agent profile hnf-growth` consumes this config, writes the shard under the
 work directory, then emits compact `summary.json` and `report.md` metrics:
+`row_hnf` baseline metrics, exact `row_preconditioned_row_hnf` best metrics,
+`candidate_count`, `rejected_candidate_count`, `improved_metrics`,
 `step_count`, `max_bitlength`, `max_abs_seen`, `fill_in_delta`,
 `certificate_op_count`, and `certificate_size_entries`. Profile outputs do not
-include raw matrices, operation traces, or feature tensors.
+include raw matrices, operation traces, feature tensors, or full search traces.

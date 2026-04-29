@@ -28,3 +28,4 @@
 - [done] [experiment] Add HNF v0.8 report bundle and threshold verdict
 - [done] [bench] Add SNF certificate benchmark and report coverage
 - [done] [cli] Refresh train/report status surfaces
+- [done] [hnf] Add exact HNF growth-search profile beta

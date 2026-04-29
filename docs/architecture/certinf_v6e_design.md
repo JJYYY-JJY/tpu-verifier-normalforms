@@ -131,14 +131,14 @@ Implemented v1.0-beta1 CLI/script surface:
 
 ## HNF v1.1 Mainline
 
-Upgrade row-style HNF v0.8 into low coefficient-growth certificate search:
+Upgrade row-style HNF v0.8 into low coefficient-growth certificate search.
+The v1.1 beta is exact deterministic search, not a neural HNF MatrixFormer path:
 
 - backward row-HNF shards from exact unimodular row operations;
-- modular projections, sign, zero mask, bitlength bucket, and density features;
-- policy heads for `swap`, `negate`, and `add`;
-- CPU replay with `replay_integer_row_ops` and `is_row_hnf`;
-- reports for validity, step count, bitlength, max absolute value, fill-in,
-  certificate size, and wall time.
+- row-swap preconditioners followed by `row_hnf`;
+- candidate acceptance by CPU `replay_integer_row_ops` and `is_row_hnf`;
+- compact baseline/best reports for validity, step count, bitlength, max
+  absolute value, fill-in, certificate size, and wall time.
 
 ## SNF v1.2 Mainline
 

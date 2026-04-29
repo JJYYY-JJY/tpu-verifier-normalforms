@@ -118,6 +118,10 @@ Measured v6e profile:
 HNF growth-search profiles should report:
 
 - validity;
+- `row_hnf` baseline metrics;
+- exact `row_preconditioned_row_hnf` best metrics;
+- candidate and rejected-candidate counts;
+- improved metric counts;
 - step count;
 - max bitlength;
 - max absolute value seen;
@@ -125,9 +129,11 @@ HNF growth-search profiles should report:
 - certificate size;
 - wall time.
 
-The v1.1 target is to improve at least one of max bitlength, step count, or
-fill-in delta on sparse 8/16/32 integer families versus `row_hnf` or a
-supervised baseline, with exact verifier success and no teacher fallback.
+The v1.1 beta target is to improve at least one of max bitlength, max absolute
+value seen, step count, certificate size, or fill-in delta on sparse 8/16/32
+integer families versus `row_hnf`, with exact verifier success and no teacher
+fallback. The beta profile is exact deterministic row-preconditioning search;
+it is not an HNF MatrixFormer training, neural rollout, or TPU beam path.
 
 ## SNF Success Lines
 
