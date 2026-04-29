@@ -686,7 +686,14 @@ def report() -> None:
 
 @report.command("status")
 def report_status() -> None:
-    _emit_json({"status": "implemented", "commands": ["benchmark", "rref-certificate"]})
+    _emit_json(
+        {
+            "status": "implemented",
+            "commands": ["benchmark", "rref-certificate"],
+            "benchmark_report_kinds": ["rref", "hnf", "snf"],
+            "benchmark_report_suite": "paper-smoke",
+        }
+    )
 
 
 @report.command("benchmark")

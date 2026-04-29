@@ -22,6 +22,8 @@ def test_report_status_lists_implemented_report_commands() -> None:
     payload = json.loads(result.output)
     assert payload["status"] == "implemented"
     assert payload["commands"] == ["benchmark", "rref-certificate"]
+    assert payload["benchmark_report_kinds"] == ["rref", "hnf", "snf"]
+    assert payload["benchmark_report_suite"] == "paper-smoke"
 
 
 def test_report_benchmark_run_mode_writes_markdown_metrics_and_plots(tmp_path: Path) -> None:
