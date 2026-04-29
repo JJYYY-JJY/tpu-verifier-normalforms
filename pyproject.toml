@@ -7,7 +7,7 @@ name = "nf-agent"
 version = "0.1.0"
 description = "Verifier-guided agents for exact matrix normal forms."
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.12,<3.13"
 dependencies = [
   "click",
   "einops",
@@ -41,15 +41,15 @@ addopts = "-q"
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["B", "E", "F", "I", "SIM", "UP"]
+ignore = ["UP040", "UP047"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 mypy_path = "src"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
-
