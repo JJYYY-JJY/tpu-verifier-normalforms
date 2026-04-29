@@ -72,6 +72,8 @@ ruff check .
 mypy src
 pytest
 nf-agent --help
+nf-agent train status
+nf-agent report status
 nf-agent data make-rref-shard \
   --config configs/rref_8x8_mod101.yaml \
   --count 4 \
@@ -129,6 +131,12 @@ nf-agent report rref-certificate \
   --teacher leftmost
 cd lean && lake build
 ```
+
+The status commands are informational and do not run training, benchmarks,
+report generation, or checker builds. `nf-agent train status` lists the
+implemented RREF/HNF training command surface; `nf-agent report status` lists
+the report commands and the built-in RREF/HNF/SNF `paper-smoke` benchmark
+report coverage.
 
 Inspect shard metadata:
 

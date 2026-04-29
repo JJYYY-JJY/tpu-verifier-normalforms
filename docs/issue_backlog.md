@@ -27,3 +27,4 @@
 - [done] [bench] Add HNF learned-policy benchmark schema with row_hnf aliases
 - [done] [experiment] Add HNF v0.8 report bundle and threshold verdict
 - [done] [bench] Add SNF certificate benchmark and report coverage
+- [done] [cli] Refresh train/report status surfaces
