@@ -1,0 +1,50 @@
+# Planned v6e1 config. Current CLI does not consume this file yet.
+task: hnf_growth_search
+integer_families:
+  - name: sparse_8x8
+    rows: 8
+    cols: 8
+    density: 0.2
+    entry_bound: 9
+  - name: sparse_16x16
+    rows: 16
+    cols: 16
+    density: 0.15
+    entry_bound: 9
+  - name: sparse_32x32
+    rows: 32
+    cols: 32
+    density: 0.1
+    entry_bound: 9
+backward_trace:
+  schema: hnf-backward-trace-zarr-v1
+  format: zarr
+  require_unimodular_ops: true
+features:
+  modular_projections: [101, 1009, 10007]
+  include_sign: true
+  include_zero_mask: true
+  include_bitlength_bucket: true
+  include_density: true
+model:
+  name: hnf-matrixformer
+  op_heads: [swap, negate, add]
+rollout:
+  command: hnf-verifier-beam
+  beam_size: 16
+  max_steps: 512
+metrics:
+  - validity
+  - step_count
+  - max_bitlength
+  - max_abs_seen
+  - fill_in_delta
+  - certificate_size
+  - wall_time
+validation:
+  verifier: replay_integer_row_ops
+  predicate: is_row_hnf
+  require_no_fallback: true
+artifacts:
+  work_dir: /tmp/nf-v6e1/hnf_growth
+  commit_policy: compact_reports_only

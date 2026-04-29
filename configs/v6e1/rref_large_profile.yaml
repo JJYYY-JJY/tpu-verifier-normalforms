@@ -1,0 +1,39 @@
+# Planned v6e1 config. Current CLI does not consume this file yet.
+task: rref_v6e_large_profile
+profile:
+  name: colab-v6e1-rref-32x32-mod1009
+  required_backend: tpu
+field:
+  modulus: 1009
+matrix:
+  family: dense
+  rows: 32
+  cols: 32
+data:
+  trace_schema: rref-backward-trace-npz-v1
+  state_schema: rref-state-action-npz-v1
+  format: zarr
+  count: 1048576
+train:
+  model: rref-matrixformer
+  steps: 20000
+  batch_size: auto
+  precision: bf16
+  checkpoint_every: 500
+rollout:
+  command: rref-verifier-beam
+  beam_size: 16
+  batch_size: auto
+  max_steps: 384
+report:
+  command: v6e-profile
+  xprof_dir: /tmp/nf-v6e1/xprof/rref_large
+  memory_profile: /tmp/nf-v6e1/memory/rref_large.json
+targets:
+  hbm_used_gb_min: 24
+  hbm_used_gb_max: 30
+  cpu_workers_min: 30
+  require_no_fallback: true
+artifacts:
+  work_dir: /tmp/nf-v6e1/rref_large
+  commit_policy: compact_reports_only

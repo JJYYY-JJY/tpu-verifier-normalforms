@@ -1,0 +1,49 @@
+# Planned v6e1 config. Current CLI does not consume this file yet.
+task: snf_certificate_search
+integer_families:
+  - name: rectangular_small
+    rows: 8
+    cols: 12
+    diagonal_factor_bound: 7
+  - name: square_medium
+    rows: 16
+    cols: 16
+    diagonal_factor_bound: 11
+certificate:
+  schema: snf-backward-certificate-zarr-v1
+  format: zarr
+  include_transformations: true
+  require_diagonal_divisibility: true
+policy:
+  name: snf-certificate-policy
+  action_heads:
+    - side
+    - op_kind
+    - target
+    - source
+    - scalar_bucket
+rollout:
+  command: snf-certificate-beam
+  beam_size: 16
+  max_steps: 1024
+validation:
+  replay_row_ops: true
+  replay_col_ops: true
+  replay_identity_transforms: true
+  verify_equation: "U * A * V = D"
+  verify_diagonal_divisibility: true
+  require_no_fallback: true
+lean_export:
+  command: export lean-samples
+  max_rows: 4
+  max_cols: 4
+  sample_count: 16
+metrics:
+  - validity
+  - certificate_size
+  - op_count
+  - bitlength
+  - lean_sample_pass_count
+artifacts:
+  work_dir: /tmp/nf-v6e1/snf_certificate
+  commit_policy: compact_reports_only

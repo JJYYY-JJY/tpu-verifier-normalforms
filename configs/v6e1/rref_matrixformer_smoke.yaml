@@ -1,0 +1,35 @@
+# Planned v6e1 config. Current CLI does not consume this file yet.
+task: rref_matrixformer_smoke
+data:
+  schema: rref-state-action-npz-v1
+  path: /tmp/nf-v6e1/data/rref_smoke_state_action.npz
+field:
+  modulus: 101
+matrix:
+  family: dense
+  rows: 16
+  cols: 16
+model:
+  name: rref-matrixformer
+  row_embedding_dim: 64
+  col_embedding_dim: 64
+  hidden_dim: 256
+  layers: 4
+train:
+  steps: 10
+  batch_size: auto
+  precision: bf16
+  seed: 0
+rollout:
+  command: rref-verifier-beam
+  beam_size: 4
+  batch_size: auto
+  max_steps: 160
+success:
+  require_finite_loss: true
+  require_checkpoint_rollout: true
+  require_explicit_failure_status: true
+artifacts:
+  checkpoint_dir: /tmp/nf-v6e1/checkpoints/rref_matrixformer_smoke
+  report_dir: /tmp/nf-v6e1/reports/rref_matrixformer_smoke
+  commit_policy: compact_reports_only

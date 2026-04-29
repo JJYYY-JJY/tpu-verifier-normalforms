@@ -1,0 +1,27 @@
+# Planned v6e1 config. Current CLI does not consume this file yet.
+task: rref_backward_state_shards
+field:
+  modulus: 1009
+matrix:
+  family: dense
+  rows: 32
+  cols: 32
+backward_trace:
+  schema: rref-backward-trace-npz-v1
+  format: zarr
+  count: 65536
+  seed_start: 0
+  max_backward_ops: 256
+  require_exact_replay: true
+state_action:
+  schema: rref-state-action-npz-v1
+  format: zarr
+  include_stop_labels: true
+  include_legal_masks: true
+validation:
+  require_prime_modulus: true
+  reject_bad_padding: true
+  reject_illegal_ops: true
+artifacts:
+  output_dir: /tmp/nf-v6e1/data/rref_backward_state
+  commit_policy: compact_reports_only
