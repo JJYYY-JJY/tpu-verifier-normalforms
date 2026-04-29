@@ -130,8 +130,10 @@ with np.load("/tmp/rref_8x8_smoke.npz", allow_pickle=False) as shard:
 PY
 ```
 
-See `docs/trajectory_shards.md` for the fixed NPZ schema and supported shard
-teachers (`leftmost`, `min_fill`).
+See `docs/trajectory_shards.md` for the fixed NPZ schemas. RREF shards support
+teachers (`leftmost`, `min_fill`). HNF shards use `row_hnf` as an explicit
+oracle/dataset source and encode integer row operations over a shard-local
+scalar vocabulary.
 
 Check the latest local training checkpoint:
 
@@ -156,10 +158,12 @@ operation traces are omitted from benchmark samples.
 
 The HNF benchmark command emits compact JSON for generated sparse integer
 matrices with top-level `status`, `source`, `family`, `count`, `rows`, `cols`,
-`density`, `entry_bound`, `aggregate`, and `samples`. Each sample runs
-`row_hnf`, exact trace replay, and `is_row_hnf`. Per-sample summaries include
-trace length, replay/HNF checks, density metrics, wall-clock timings, and exact
-coefficient-growth metrics. Matrices and row-operation traces are omitted.
+`density`, `entry_bound`, and `policies`. The canonical baseline policy is
+`policies.row_hnf`; top-level `aggregate` and `samples` remain aliases for that
+baseline for backward compatibility. Optional learned policies are
+`supervised_greedy`, `dagger_greedy`, `actor_critic_greedy`, and `beam`. Each
+policy is checked by exact row-operation replay and `is_row_hnf`; failed neural
+rollouts are reported directly and are not replaced by `row_hnf`.
 
 Integer HNF uses a row-style convention: nonzero rows precede zero rows, pivot
 columns strictly increase, pivots are positive, entries below pivots are zero,
@@ -179,9 +183,26 @@ Without `--input-json`, it runs the built-in `paper-smoke` suite: generated RREF
 dense, sparse, and low-rank samples plus generated sparse integer HNF samples.
 With one or more `--input-json PATH` options, it only summarizes existing compact
 RREF/HNF benchmark JSON. The output directory contains `report.md`,
-`metrics.json`, and `plots/*.png`. Neural RREF policy rows appear only when the
-input benchmark data includes neural rollout metrics or when run mode receives
-both `--rref-checkpoint` and `--rref-model-data`.
+`metrics.json`, and `plots/*.png`. Neural RREF/HNF policy rows appear only when
+input benchmark data includes rollout metrics or when run mode receives matching
+model metadata and checkpoints.
+
+The v0.8 HNF experiment command builds a reproducible supervised -> DAgger ->
+actor-critic -> verifier-beam bundle:
+
+```bash
+nf-agent experiment hnf-v08 \
+  --out-dir /tmp/nf-v0.8-hnf \
+  --samples-per-size 256 \
+  --run-seed-count 5 \
+  --sizes 4 --sizes 6 --sizes 8 \
+  --density 0.2 \
+  --entry-bound 5
+```
+
+It writes `report.md`, `metrics.json`, plots, per-run benchmark JSON, and a
+threshold verdict comparing `dagger_actor_critic_beam` with
+`supervised_greedy` per size.
 
 ## Roadmap
 
@@ -199,5 +220,6 @@ both `--rref-checkpoint` and `--rref-model-data`.
   checker follow-up.
 - `v0.7`: paper-style RREF/HNF benchmark report with Markdown, machine JSON,
   and PNG plots.
-- `v0.8`: HNF training/rollout, DAgger, policy gradient, and verifier beam
-  search as explicit experimental branches.
+- `v0.8`: HNF NPZ shards, supervised imitation, online DAgger,
+  actor-critic fine-tuning, verifier beam search, HNF learned-policy benchmark,
+  and experiment report bundles.
