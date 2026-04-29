@@ -6,8 +6,10 @@ import click
 from nf_agent.benchmarks import (
     HNFBenchmarkConfig,
     RREFBenchmarkConfig,
+    SNFBenchmarkConfig,
     run_hnf_benchmark,
     run_rref_benchmark,
+    run_snf_benchmark,
 )
 from nf_agent.benchmarks.rref_benchmark import BenchmarkSource, MatrixFamily
 from nf_agent.data.hnf_shards import write_hnf_shard
@@ -562,6 +564,43 @@ def benchmark_hnf(
             )
         )
     except (TypeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit_json(result)
+
+
+@benchmark.command("snf")
+@click.option("--rows", type=int, required=True)
+@click.option("--cols", type=int, required=True)
+@click.option("--count", type=int, required=True)
+@click.option("--diagonal-factor-bound", type=int, default=5, show_default=True)
+@click.option("--row-op-count", type=int, default=2, show_default=True)
+@click.option("--col-op-count", type=int, default=2, show_default=True)
+@click.option("--op-scalar-bound", type=int, default=3, show_default=True)
+@click.option("--seed-start", type=int, default=0, show_default=True)
+def benchmark_snf(
+    rows: int,
+    cols: int,
+    count: int,
+    diagonal_factor_bound: int,
+    row_op_count: int,
+    col_op_count: int,
+    op_scalar_bound: int,
+    seed_start: int,
+) -> None:
+    try:
+        result = run_snf_benchmark(
+            SNFBenchmarkConfig(
+                count=count,
+                rows=rows,
+                cols=cols,
+                diagonal_factor_bound=diagonal_factor_bound,
+                row_op_count=row_op_count,
+                col_op_count=col_op_count,
+                op_scalar_bound=op_scalar_bound,
+                seed_start=seed_start,
+            )
+        )
+    except (TypeError, ValueError, IndexError) as exc:
         raise click.ClickException(str(exc)) from exc
     _emit_json(result)
 
