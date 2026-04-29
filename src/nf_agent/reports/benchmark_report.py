@@ -11,11 +11,13 @@ from typing import Any, Literal, cast
 from nf_agent.benchmarks import (
     HNFBenchmarkConfig,
     RREFBenchmarkConfig,
+    SNFBenchmarkConfig,
     run_hnf_benchmark,
     run_rref_benchmark,
+    run_snf_benchmark,
 )
 
-ReportKind = Literal["rref", "hnf"]
+ReportKind = Literal["rref", "hnf", "snf"]
 ReportMode = Literal["run", "summary"]
 JsonDict = dict[str, Any]
 
@@ -24,8 +26,13 @@ _FORBIDDEN_SAMPLE_FIELDS = {
     "final_matrix",
     "input",
     "initial_matrix",
+    "diagonal",
+    "left_transform",
     "matrix",
     "ops",
+    "right_transform",
+    "row_ops",
+    "col_ops",
 }
 
 
@@ -82,6 +89,14 @@ def _run_paper_smoke_suite(config: BenchmarkReportConfig) -> list[BenchmarkEntry
             seed_start=config.seed_start,
         )
     )
+    snf_certificates = run_snf_benchmark(
+        SNFBenchmarkConfig(
+            count=config.sample_count,
+            rows=config.rows,
+            cols=config.cols,
+            seed_start=config.seed_start,
+        )
+    )
 
     return [
         BenchmarkEntry(
@@ -107,6 +122,12 @@ def _run_paper_smoke_suite(config: BenchmarkReportConfig) -> list[BenchmarkEntry
             label="hnf_generated_sparse_integer",
             payload=hnf_sparse,
             metadata={"family": "sparse_integer"},
+        ),
+        BenchmarkEntry(
+            kind="snf",
+            label="snf_generated_certificates",
+            payload=snf_certificates,
+            metadata={"family": "snf_certificate"},
         ),
     ]
 
@@ -197,6 +218,14 @@ def _entry_from_payload(payload: JsonDict, label: str, source_path: str | None) 
             metadata={"family": payload.get("family", "unknown")},
             source_path=source_path,
         )
+    if _looks_like_snf_benchmark(payload):
+        return BenchmarkEntry(
+            kind="snf",
+            label=label,
+            payload=payload,
+            metadata={"family": payload.get("family", "unknown")},
+            source_path=source_path,
+        )
     origin = f" {source_path}" if source_path is not None else ""
     raise ValueError(f"unsupported benchmark JSON{origin}")
 
@@ -222,6 +251,18 @@ def _looks_like_hnf_benchmark(payload: Mapping[str, Any]) -> bool:
                 and isinstance(payload.get("samples"), list)
             )
         )
+    )
+
+
+def _looks_like_snf_benchmark(payload: Mapping[str, Any]) -> bool:
+    policies = payload.get("policies")
+    return (
+        payload.get("status") == "ok"
+        and payload.get("family") == "snf_certificate"
+        and isinstance(policies, dict)
+        and "certificate_replay" in policies
+        and "rows" in payload
+        and "cols" in payload
     )
 
 
@@ -377,7 +418,7 @@ def _suite_rows(entries: Sequence[BenchmarkEntry]) -> list[JsonDict]:
                     "policies": ", ".join(sorted(str(key) for key in policies)),
                 }
             )
-        else:
+        elif entry.kind == "hnf":
             hnf_policies = entry.payload.get("policies")
             policy_names = (
                 sorted(str(key) for key in hnf_policies)
@@ -396,6 +437,20 @@ def _suite_rows(entries: Sequence[BenchmarkEntry]) -> list[JsonDict]:
                     "policies": ", ".join(policy_names),
                 }
             )
+        else:
+            policies = _required_dict(payload, "policies", entry.label)
+            rows.append(
+                {
+                    "benchmark": entry.label,
+                    "kind": "snf",
+                    "source": _string(payload.get("source", "unknown")),
+                    "family": _string(payload.get("family", "unknown")),
+                    "shape": f"{payload.get('rows', '?')}x{payload.get('cols', '?')}",
+                    "samples": _int(payload.get("count", 0)),
+                    "modulus": "",
+                    "policies": ", ".join(sorted(str(key) for key in policies)),
+                }
+            )
     return rows
 
 
@@ -404,8 +459,10 @@ def _normalized_rows(entries: Sequence[BenchmarkEntry]) -> list[JsonDict]:
     for entry in entries:
         if entry.kind == "rref":
             rows.extend(_normalized_rref_rows(entry))
-        else:
+        elif entry.kind == "hnf":
             rows.extend(_normalized_hnf_rows(entry))
+        else:
+            rows.extend(_normalized_snf_rows(entry))
     return rows
 
 
@@ -471,6 +528,29 @@ def _normalized_hnf_row(
     row["mean_invalid_action_count"] = _float(aggregate.get("mean_invalid_action_count", 0.0))
     row["mean_masked_action_count"] = _float(aggregate.get("mean_masked_action_count", 0.0))
     return row
+
+
+def _normalized_snf_rows(entry: BenchmarkEntry) -> list[JsonDict]:
+    payload = entry.payload
+    policies = _required_dict(payload, "policies", entry.label)
+    rows: list[JsonDict] = []
+    for policy_name, policy_value in policies.items():
+        policy = _as_dict(policy_value, f"{entry.label}.policies.{policy_name}")
+        aggregate = _required_dict(policy, "aggregate", f"{entry.label}.{policy_name}")
+        row = _base_normalized_row(
+            entry=entry,
+            policy=str(policy_name),
+            aggregate=aggregate,
+            source=_string(payload.get("source", "unknown")),
+            family=_string(payload.get("family", "unknown")),
+        )
+        row["modulus"] = ""
+        row["mean_step_or_trace_length"] = _float(aggregate.get("mean_operation_count", 0.0))
+        row["mean_rank"] = ""
+        row["mean_invalid_action_count"] = 0.0
+        row["mean_masked_action_count"] = 0.0
+        rows.append(row)
+    return rows
 
 
 def _base_normalized_row(
@@ -673,7 +753,7 @@ def _render_markdown(
 
     return "\n".join(
         [
-            "# v0.8 Benchmark Report",
+            "# v0.9 Benchmark Report",
             "",
             "## Provenance",
             "",
@@ -686,7 +766,8 @@ def _render_markdown(
             "",
             "Verifier paths use exact integer or modular arithmetic. This report does not "
             "introduce floating point into certificate replay, row-operation replay, or "
-            "normal-form predicates. Neural RREF rollout is reported only as its own "
+            "normal-form predicates. SNF certificate replay and transform checks remain "
+            "integer-only. Neural RREF rollout is reported only as its own "
             "policy when supplied; failed neural rollouts remain failures and are not "
             "replaced by deterministic teachers.",
             "",
@@ -765,7 +846,8 @@ def _render_markdown(
             "",
             "- `paper-smoke` is a local reproducibility suite, not a publication-scale run.",
             "- Timing values are local wall-clock measurements with no warmup or repeat protocol.",
-            "- SNF benchmark and report coverage is out of scope for v0.8.",
+            "- SNF benchmark uses generated certificates from known diagonal forms and is "
+            "not an SNF algorithm benchmark.",
             "- Full matrices and row-operation traces are intentionally omitted from samples.",
             "",
         ]
