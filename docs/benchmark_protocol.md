@@ -5,9 +5,11 @@ runs the exact `leftmost` baseline for every sample. When a checkpoint is
 provided, it also runs neural rollout on the same samples. Neural failures are
 reported as neural failures; they are not replaced by teacher traces.
 
-`nf-agent benchmark hnf` is the v0.4 integer row-HNF benchmark suite. It only
-uses generated sparse integer matrices in this slice. Every sample runs
-`row_hnf`, exact integer trace replay, and `is_row_hnf`.
+`nf-agent benchmark hnf` is the integer row-HNF benchmark suite. It always runs
+the exact `row_hnf` baseline. When HNF policy checkpoints are supplied, it also
+runs learned greedy and beam policies on the same generated sparse integer
+matrices. Neural failures remain neural failures; they are not replaced by
+teacher traces.
 
 ## Sources
 
@@ -82,13 +84,21 @@ HNF top-level fields:
 - `source`: `generated`.
 - `family`: `sparse_integer`.
 - `count`, `rows`, `cols`, `density`, `entry_bound`, and `seed_start`.
+- `policies`: per-policy results keyed by `row_hnf` and optional
+  `supervised_greedy`, `dagger_greedy`, `actor_critic_greedy`, and `beam`.
+- `aggregate` and `samples`: backward-compatible aliases for
+  `policies.row_hnf.aggregate` and `policies.row_hnf.samples`.
+
+Each HNF policy contains:
+
 - `aggregate`: `sample_count`, `success_count`, `success_rate`,
-  `status_counts`, mean trace/density/time metrics, and exact maxima for
-  coefficient-growth metrics.
+  `status_counts`, mean trace/step/density/time metrics, invalid-action metrics
+  where applicable, and exact maxima for coefficient-growth metrics where
+  emitted.
 - `samples`: compact per-sample summaries. Matrices and row-operation traces are
   intentionally omitted.
 
-HNF sample fields:
+HNF `row_hnf` sample fields:
 
 - `sample_index` and `seed`.
 - `status`, `success`, and `trace_length`.
@@ -98,6 +108,17 @@ HNF sample fields:
   `initial_bitlength`, `max_bitlength`, `growth_numerator`,
   `growth_denominator`, and `step_count`.
 - `wall_time_seconds`, `hnf_wall_time_seconds`, `replay_wall_time_seconds`,
+  and `predicate_wall_time_seconds`.
+
+HNF learned-policy sample fields:
+
+- `sample_index` and `seed`.
+- `status`: `success`, `max_steps_exceeded`, or `invalid_action`.
+- `success`, `step_count`, `invalid_action_count`, `masked_action_count`, and
+  `invalid_action_breakdown`.
+- `checkpoint_step`, `replay_ok`, and `final_is_hnf`.
+- Fill-in density fields.
+- `wall_time_seconds`, `rollout_wall_time_seconds`, `replay_wall_time_seconds`,
   and `predicate_wall_time_seconds`.
 
 ## Metrics
@@ -128,14 +149,14 @@ Matrix families:
 - Low-rank products `A * B mod p`.
 - Sparse integer matrices with Bernoulli support and selected entries sampled
   from `[-entry_bound, entry_bound] \ {0}`. The default `entry_bound` is `9`.
-- Future SNF families and HNF training/rollout benchmark reports.
+- Future SNF families.
 
 No benchmark may replace a failed neural rollout with a deterministic teacher
 without reporting the rollout as failed.
 
 ## Paper-Style Report
 
-`nf-agent report benchmark --out-dir PATH` writes the v0.7 benchmark report
+`nf-agent report benchmark --out-dir PATH` writes the v0.8 benchmark report
 artifacts:
 
 - `report.md`: human-readable Markdown with provenance, exactness/no-fallback
@@ -145,7 +166,7 @@ artifacts:
   coefficient-growth rows, provenance, and artifact paths.
 - `plots/*.png`: success rate, trace/step length, fill-in delta, and HNF
   coefficient-growth plots. `neural_invalid_actions.png` is written only when a
-  neural RREF policy is present.
+  neural RREF or HNF policy is present.
 
 Run mode is selected when no `--input-json` is provided. The only built-in suite
 in this slice is `paper-smoke`, with defaults:
@@ -175,3 +196,19 @@ the benchmark harness. Verifier paths remain exact: no floating point is used in
 certificate replay, row-operation replay, or normal-form predicates. Failed
 neural rollouts remain failed neural rows; the report never replaces them with
 deterministic teacher traces.
+
+## HNF v0.8 Experiment
+
+`nf-agent experiment hnf-v08 --out-dir PATH` orchestrates HNF shard generation,
+supervised imitation, online DAgger aggregation, actor-critic fine-tuning,
+verifier beam search, compact HNF policy benchmarks, plots, `metrics.json`, and
+`report.md`.
+
+The experiment threshold is evaluated per matrix size:
+
+- `dagger_actor_critic_beam.success_rate >= supervised_greedy.success_rate + 0.05`
+- `dagger_actor_critic_beam.mean_step_count <= supervised_greedy.mean_step_count * 0.90`
+
+If either condition fails for any size, the command emits
+`"status": "failed_threshold"` in its JSON result and writes the verdict into
+`metrics.json`.
