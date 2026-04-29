@@ -15,6 +15,7 @@ from nf_agent.data.matrix_families import (
     low_rank_random_matrix,
     sparse_random_matrix,
 )
+from nf_agent.data.shard_storage import load_shard_arrays, shard_format, write_shard_arrays
 from nf_agent.env.elementary_ops import Matrix, inv_mod, normalize_matrix, require_prime
 from nf_agent.env.rref_modp import PivotAction, RowOp, is_rref_modp, replay_row_ops
 from nf_agent.teachers.leftmost import LeftmostRREFTeacher
@@ -53,7 +54,7 @@ class RREFBackwardShardConfig:
     def max_pivots(self) -> int:
         return min(self.rows, self.cols)
 
-    def as_metadata_config(self) -> dict[str, Any]:
+    def as_metadata_config(self, storage_format: str = "npz") -> dict[str, Any]:
         matrix: dict[str, Any] = {
             "family": self.family,
             "rows": self.rows,
@@ -69,7 +70,7 @@ class RREFBackwardShardConfig:
             "matrix": matrix,
             "backward_trace": {
                 "schema": SCHEMA_VERSION,
-                "format": "npz",
+                "format": storage_format,
                 "max_backward_ops": self.max_backward_ops,
                 "require_exact_replay": True,
             },
@@ -144,8 +145,8 @@ def load_rref_backward_shard_config(config_path: str | Path) -> RREFBackwardShar
     if schema != SCHEMA_VERSION:
         raise ValueError(f"unsupported backward_trace.schema: {schema!r}")
     output_format = backward_trace.get("format", "npz")
-    if output_format != "npz":
-        raise ValueError("backward_trace.format must be 'npz' for this command")
+    if output_format not in {"npz", "zarr"}:
+        raise ValueError("backward_trace.format must be 'npz' or 'zarr'")
     max_backward_ops = _require_positive_int(
         backward_trace.get("max_backward_ops"),
         "backward_trace.max_backward_ops",
@@ -242,10 +243,15 @@ def _decode_row_op(kind: int, target: int, source: int, scalar: int) -> RowOp:
     raise ValueError(f"unknown encoded row operation kind: {kind}")
 
 
-def _metadata_json(config: RREFBackwardShardConfig, count: int, seed_start: int) -> str:
+def _metadata_json(
+    config: RREFBackwardShardConfig,
+    count: int,
+    seed_start: int,
+    storage_format: str = "npz",
+) -> str:
     payload = {
         "schema_version": SCHEMA_VERSION,
-        "config": config.as_metadata_config(),
+        "config": config.as_metadata_config(storage_format),
         "count": count,
         "seed_start": seed_start,
         "seed_stop_exclusive": seed_start + count,
@@ -275,6 +281,7 @@ def generate_rref_backward_shard(
     config_path: str | Path,
     count: int,
     seed_start: int,
+    storage_format: str = "npz",
 ) -> ShardArrays:
     if count <= 0:
         raise ValueError("count must be positive")
@@ -319,7 +326,7 @@ def generate_rref_backward_shard(
         "pivots": pivots,
         "ops": ops,
         "op_mask": op_mask,
-        "metadata_json": np.asarray(_metadata_json(config, count, seed_start)),
+        "metadata_json": np.asarray(_metadata_json(config, count, seed_start, storage_format)),
     }
 
 
@@ -332,22 +339,23 @@ def write_rref_backward_shard(
     if count <= 0:
         raise ValueError("count must be positive")
     path = Path(out_path)
-    if path.suffix != ".npz":
-        raise ValueError("output path must end with .npz")
+    storage_format = shard_format(path)
 
     shard = generate_rref_backward_shard(
         config_path=config_path,
         count=count,
         seed_start=seed_start,
+        storage_format=storage_format,
     )
-    path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(path, **shard)  # type: ignore[arg-type]
+    write_shard_arrays(path, shard)
 
 
 def _metadata_from_array(value: ShardValue) -> dict[str, Any]:
     if value.shape != ():
         raise ValueError("metadata_json must be a scalar JSON string")
     raw = value.item()
+    if isinstance(raw, bytes):
+        raw = raw.decode("utf-8")
     if not isinstance(raw, str):
         raw = str(raw)
     loaded = json.loads(raw)
@@ -485,18 +493,7 @@ def _validate_replay(arrays: Mapping[str, ShardValue], p: int) -> None:
 
 def load_rref_backward_shard(path: str | Path) -> tuple[ShardArrays, dict[str, Any]]:
     shard_path = Path(path)
-    if shard_path.suffix != ".npz":
-        raise ValueError("data path must end with .npz")
-    if not shard_path.exists():
-        raise ValueError(f"data path does not exist: {shard_path}")
-
-    with np.load(shard_path, allow_pickle=False) as shard:
-        required = [*_REQUIRED_ARRAYS.keys(), "metadata_json"]
-        missing = sorted(key for key in required if key not in shard.files)
-        if missing:
-            raise ValueError(f"missing required array(s): {', '.join(missing)}")
-        arrays = {key: np.asarray(shard[key]) for key in _REQUIRED_ARRAYS}
-        metadata_json = np.asarray(shard["metadata_json"])
+    arrays, metadata_json = load_shard_arrays(shard_path, _REQUIRED_ARRAYS)
 
     metadata = _metadata_from_array(metadata_json)
     schema_version = metadata.get("schema_version")

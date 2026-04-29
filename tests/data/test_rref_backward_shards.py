@@ -108,12 +108,15 @@ def test_backward_config_rejects_non_prime_modulus(tmp_path: Path) -> None:
         load_rref_backward_shard_config(config_path)
 
 
-def test_backward_config_rejects_non_npz_format(tmp_path: Path) -> None:
+def test_backward_config_accepts_zarr_format_and_rejects_unknown_format(tmp_path: Path) -> None:
     config_path = _write_config(tmp_path)
     text = config_path.read_text().replace("  format: npz\n", "  format: zarr\n")
     config_path.write_text(text)
 
-    with pytest.raises(ValueError, match="backward_trace.format must be 'npz'"):
+    assert load_rref_backward_shard_config(config_path).modulus == 101
+
+    config_path.write_text(text.replace("  format: zarr\n", "  format: zip\n"))
+    with pytest.raises(ValueError, match="backward_trace.format must be 'npz' or 'zarr'"):
         load_rref_backward_shard_config(config_path)
 
 
