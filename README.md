@@ -14,13 +14,13 @@ See:
 - `docs/benchmarks/v6e1_protocol.md`
 - `configs/v6e1/`
 
-## Current Baseline: v1.0-beta1
+## Current Baseline: v1.1 HNF Exact Growth-Search Beta
 
 The current baseline is the verifier-first RREF/HNF/SNF stack plus the RREF
-v1.0-beta1 MatrixFormer/Zarr/verifier-beam profile surface. Local CPU smoke is
-implemented; real TPU v6e success is a remote acceptance gate. See
-`docs/v0.9_closure.md`, `docs/benchmarks/v6e1_protocol.md`, and
-`results/measured/`.
+v1.0-beta1 MatrixFormer/Zarr/verifier-beam profile surface and the v1.1 HNF
+exact row-preconditioned growth-search beta. Local CPU smoke is implemented;
+real TPU v6e success remains a remote acceptance gate. See `docs/v0.9_closure.md`,
+`docs/benchmarks/v6e1_protocol.md`, and `results/measured/`.
 
 Known v6e bottleneck: the tracked `colab-v6e1-large` run is not a saturation
 workload. TPU training is faster than Apple M4 by the harness proxy, but
