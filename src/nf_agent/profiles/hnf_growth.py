@@ -176,21 +176,23 @@ def _evaluate_candidate(
     input_matrix: Matrix,
     candidate_index: int,
     precondition_ops: Sequence[IntegerRowOp],
-) -> _HNFGrowthCandidateEvaluation | None:
+) -> _HNFGrowthCandidateEvaluation:
     ops_prefix = tuple(precondition_ops)
     policy = "row_hnf" if candidate_index == 0 and not ops_prefix else _SEARCH_POLICY
-    try:
-        preconditioned = replay_integer_row_ops(input_matrix, ops_prefix)
-        result = row_hnf(preconditioned)
-        ops = (*ops_prefix, *result.ops)
-        replay_ok = replay_integer_row_ops(input_matrix, ops) == result.final_matrix
-        predicate_ok = is_row_hnf(result.final_matrix)
-    except (IndexError, TypeError, ValueError):
-        return None
+    preconditioned = replay_integer_row_ops(input_matrix, ops_prefix)
+    result = row_hnf(preconditioned)
+    ops = (*ops_prefix, *result.ops)
+    replay_ok = replay_integer_row_ops(input_matrix, ops) == result.final_matrix
+    predicate_ok = is_row_hnf(result.final_matrix)
 
     success = replay_ok and predicate_ok
     if not success:
-        return None
+        raise ValueError(
+            "HNF growth candidate verification failed: "
+            f"candidate_index={candidate_index}, "
+            f"replay_ok={replay_ok}, "
+            f"predicate_ok={predicate_ok}"
+        )
 
     summary = HNFGrowthCandidateSummary(
         candidate_index=candidate_index,
@@ -251,12 +253,8 @@ def _search_row_preconditioned_row_hnf(
         ]
 
     evaluations: list[_HNFGrowthCandidateEvaluation] = []
-    rejected_candidate_count = 0
     for candidate_index, precondition_ops in enumerate(preconditioners):
         evaluation = _evaluate_candidate(input_matrix, candidate_index, precondition_ops)
-        if evaluation is None:
-            rejected_candidate_count += 1
-            continue
         evaluations.append(evaluation)
 
     if not evaluations:
@@ -279,7 +277,7 @@ def _search_row_preconditioned_row_hnf(
         best_candidate=best.summary.candidate_index,
         best_policy=best.summary.policy,
         candidate_count=len(preconditioners),
-        rejected_candidate_count=rejected_candidate_count,
+        rejected_candidate_count=0,
         improved_metrics=_improved_metrics(baseline.summary, best.summary),
         best_ops=best.ops,
         best_final_matrix=best.final_matrix,
