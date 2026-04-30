@@ -208,7 +208,7 @@
       "stdout_path": "/tmp/nf-pre-colab/logs/lean_build.stdout"
     }
   ],
-  "git_commit": "bf99ea9da22245fbd0908abe2f17df7af1b49fb4",
+  "git_commit": "4a1977a522511b8f99fa1b99fea40d326797038f",
   "overall_status": "ok",
   "schema_version": "pre-colab-preflight-manifest-v1",
   "verdicts": {
