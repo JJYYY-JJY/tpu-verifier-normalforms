@@ -6,7 +6,12 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+import yaml
+
 SCRIPT_PATH = Path(__file__).resolve().parents[2] / "scripts" / "rref_v6e_profile.py"
+REDUCED_CONFIG_PATH = (
+    Path(__file__).resolve().parents[2] / "configs" / "v6e1" / "rref_colab_reduced_profile.yaml"
+)
 
 
 def _load_script() -> ModuleType:
@@ -59,7 +64,9 @@ def _write_smoke_config(tmp_path: Path, *, required_backend: str | None = None) 
         "train:\n"
         "  steps: 2\n"
         "  batch_size: auto\n"
+        "  learning_rate: 0.002\n"
         "  seed: 0\n"
+        "  checkpoint_every: 2\n"
         "rollout:\n"
         "  max_steps: 4\n"
         "  beam_width: 4\n"
@@ -78,6 +85,34 @@ def test_assert_backend_fails_before_training() -> None:
         assert "before training" in str(exc)
     else:
         raise AssertionError("expected backend mismatch")
+
+
+def test_rref_colab_reduced_profile_has_bounded_colab_defaults() -> None:
+    config = yaml.safe_load(REDUCED_CONFIG_PATH.read_text(encoding="utf-8"))
+
+    assert config["profile"] == {
+        "name": "colab-v6e1-rref-reduced-32x32-mod1009",
+        "required_backend": "tpu",
+    }
+    assert config["field"]["modulus"] == 1009
+    assert config["matrix"] == {"family": "dense", "rows": 32, "cols": 32}
+    assert config["data"]["format"] == "zarr"
+    assert config["data"]["count"] == 2048
+    assert config["data"]["max_backward_ops"] == 64
+    assert config["model"] == {
+        "name": "rref-matrixformer",
+        "row_embedding_dim": 64,
+        "col_embedding_dim": 64,
+        "hidden_dim": 256,
+        "layers": 4,
+        "num_heads": 4,
+    }
+    assert config["train"]["steps"] == 500
+    assert config["train"]["batch_size"] == "auto"
+    assert config["train"]["checkpoint_every"] == 100
+    assert config["rollout"]["beam_width"] == 8
+    assert config["rollout"]["max_steps"] == 64
+    assert config["artifacts"]["report_dir"] == "/tmp/nf-v6e1/rref_reduced/report"
 
 
 def test_rref_v6e_profile_required_tpu_fails_before_training(tmp_path: Path) -> None:
@@ -143,6 +178,8 @@ def test_rref_v6e_profile_local_smoke_writes_compact_report(tmp_path: Path) -> N
     assert payload["task"] == {"rows": 4, "cols": 4, "modulus": 101}
     assert payload["data"]["format"] == "zarr"
     assert payload["train"]["final_loss"] >= 0.0
+    assert payload["train"]["learning_rate"] == 0.002
+    assert payload["train"]["checkpoint_every"] == 2
     assert payload["beam"]["status"] in {"success", "max_steps_exceeded"}
     assert payload["beam"]["replay_ok"] is True
     assert payload["exact_cpu_verifier"]["replay_ok"] is True
@@ -163,4 +200,3 @@ def test_rref_v6e_profile_local_smoke_writes_compact_report(tmp_path: Path) -> N
     for record in _walk_json(payload):
         leaked = forbidden_keys.intersection(record)
         assert not leaked, f"v6e profile leaked forbidden keys: {sorted(leaked)}"
-

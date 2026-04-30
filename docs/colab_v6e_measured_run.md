@@ -1,92 +1,62 @@
-# Colab v6e Measured Run
+# Colab v6e Reduced Profile
 
-This runbook records measured RREF runs without tracking NPZ/Zarr shards,
-checkpoints, raw logs, or Colab PDFs. The tracked artifacts are compact JSON
-plus Markdown summaries under `results/measured/`.
+This runbook records the reduced RREF v6e-1 MatrixFormer/Zarr profile without
+tracking Zarr shards, checkpoints, raw logs, or Colab PDFs. The tracked source
+artifact is the notebook; generated outputs stay under `/tmp` unless a compact
+summary is intentionally imported later.
 
 For Colab, open `notebooks/rref_v6e_measured_run.ipynb`. It clones the repo,
-installs the package, asserts TPU backend, runs the measured profile, displays a
-compact summary, and downloads the two `/tmp` result files.
+installs the package, probes TPU in a subprocess, calls `run_profile(...)`
+through the Python API, displays compact stage progress, and downloads the two
+report files from `/tmp/nf-v6e1/rref_reduced/report`.
 
-The harness uses the same verifier-first path as the smoke notebook:
+The reduced profile keeps the same verifier-first path as the full v6e target:
 
-- Shard generation calls the explicit RREF teacher as a dataset source.
-- Training writes Orbax checkpoints at a configurable cadence.
-- Benchmarking uses `nf-agent`'s compact RREF benchmark schema.
-- Neural failures remain visible in `policies.neural.aggregate.status_counts`.
+- Backward shard generation uses the explicit RREF teacher as a dataset source.
+- State/action shards use the RREF MatrixFormer Zarr schema.
+- Training writes Orbax checkpoints at the YAML `train.checkpoint_every`.
+- Verifier-beam rollout remains neural/search driven with explicit failure
+  statuses.
+- CPU exact replay and `is_rref_modp` remain the verifier authority.
 - No hidden teacher fallback is allowed.
-
-## Local Apple M4 CPU
-
-The Apple M4 profile pins JAX to CPU. Official JAX installation docs say Mac GPU
-is not supported by JAX and recommend the standard CPU install for macOS GPU
-use; Apple's Metal plug-in exists but is experimental and does not pass all JAX
-tests. The default measured run therefore uses CPU and records the actual JAX
-backend in the output JSON. References:
-[`JAX Mac GPU`](https://docs.jax.dev/en/latest/installation.html#mac-gpu),
-[`Apple jax-metal`](https://developer.apple.com/metal/jax/).
-
-```bash
-source .venv/bin/activate
-python scripts/rref_measured_run.py \
-  --profile apple-m4-large \
-  --work-dir /tmp/nf-rref-apple-m4-large \
-  --out results/measured/rref_8x8_mod101_apple_m4_large.json \
-  --summary-md results/measured/rref_8x8_mod101_apple_m4_large.md
-```
-
-The profile sets:
-
-- `JAX_PLATFORMS=cpu`
-- `OMP_NUM_THREADS=10`
-- `VECLIB_MAXIMUM_THREADS=10`
-- `XLA_FLAGS=--xla_cpu_multi_thread_eigen=true intra_op_parallelism_threads=10`
 
 ## Colab v6e-1 TPU
 
-Run this only in a Colab TPU v6e runtime. The profile requests TPU first and
-asserts that JAX selected backend is exactly `tpu`; if not, it fails before
-training. References:
+Run this only in a Colab TPU v6e runtime. The notebook sets `JAX_PLATFORMS` to
+`tpu,cpu`, probes TPU in a subprocess, then lets `scripts/rref_v6e_profile.py`
+assert that the real profile selected backend is exactly `tpu`. References:
 [`Cloud TPU v6e`](https://cloud.google.com/tpu/docs/v6e-training),
 [`JAX platforms`](https://docs.jax.dev/en/latest/config_options.html#common-configuration-options).
 
-```bash
-python scripts/rref_measured_run.py \
-  --profile colab-v6e1-large \
-  --work-dir /tmp/nf-rref-colab-v6e1-large \
-  --out /tmp/rref_8x8_mod101_colab_v6e1_large.json \
-  --summary-md /tmp/rref_8x8_mod101_colab_v6e1_large.md
-```
+Reduced default:
 
-After the Colab run, copy only the compact JSON and Markdown summary into:
+- config: `configs/v6e1/rref_colab_reduced_profile.yaml`
+- task: 32x32 dense RREF over `F_1009`
+- data: Zarr, `count: 2048`, `max_backward_ops: 64`
+- model: row/col embeddings 64, hidden 256, 4 layers, 4 heads
+- train: `steps: 500`, `batch_size: auto`, `checkpoint_every: 100`
+- rollout: `beam_width: 8`, `max_steps: 64`, `batch_size: auto`
+- work dir: `/tmp/nf-v6e1/rref_reduced/work`
+- report dir: `/tmp/nf-v6e1/rref_reduced/report`
 
-- `results/measured/rref_8x8_mod101_colab_v6e1_large.json`
-- `results/measured/rref_8x8_mod101_colab_v6e1_large.md`
+Download only:
 
-Do not commit the Colab PDF, `/tmp` work directory, NPZ shard, checkpoints, or
+- `/tmp/nf-v6e1/rref_reduced/report/summary.json`
+- `/tmp/nf-v6e1/rref_reduced/report/report.md`
+
+Do not commit the Colab PDF, `/tmp` work directory, Zarr shards, checkpoints, or
 raw stdout/stderr logs.
 
-## Smoke
+## Full Target Spec
 
-Use this for local harness validation:
+`configs/v6e1/rref_large_profile.yaml` remains the full 32x32/F_1009 target
+spec. It is not the notebook default because its `count: 1048576`, 20000 train
+steps, and 384-step beam horizon are intended for a later full TPU acceptance
+run, not a stable 30-60 minute Colab execution.
 
-```bash
-source .venv/bin/activate
-python scripts/rref_measured_run.py \
-  --profile local-smoke \
-  --work-dir /tmp/nf-rref-smoke \
-  --out results/measured/rref_smoke.json \
-  --summary-md results/measured/rref_smoke.md
-```
+## Local Smoke
 
-The smoke output should contain `schema_version: rref-measured-run-v1`, backend
-metadata, batch calibration records, train metrics, compact policy aggregates,
-and the no-fallback statement. It must not contain matrices, row operations,
-checkpoints, or raw logs.
-
-## v1.0-beta1 MatrixFormer/Zarr Smoke
-
-Use this for the RREF verifier-beam surface:
+Use this for local runner validation:
 
 ```bash
 source .venv/bin/activate

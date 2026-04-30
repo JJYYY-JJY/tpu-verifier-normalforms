@@ -1,0 +1,48 @@
+task: rref_v6e_colab_reduced_profile
+profile:
+  name: colab-v6e1-rref-reduced-32x32-mod1009
+  required_backend: tpu
+field:
+  modulus: 1009
+matrix:
+  family: dense
+  rows: 32
+  cols: 32
+data:
+  trace_schema: rref-backward-trace-npz-v1
+  state_schema: rref-state-action-npz-v1
+  format: zarr
+  count: 2048
+  seed_start: 0
+  max_backward_ops: 64
+model:
+  name: rref-matrixformer
+  row_embedding_dim: 64
+  col_embedding_dim: 64
+  hidden_dim: 256
+  layers: 4
+  num_heads: 4
+train:
+  model: rref-matrixformer
+  steps: 500
+  batch_size: auto
+  learning_rate: 0.001
+  precision: bf16
+  checkpoint_every: 100
+rollout:
+  command: rref-verifier-beam
+  beam_width: 8
+  batch_size: auto
+  max_steps: 64
+report:
+  command: v6e-profile
+  xprof_dir: /tmp/nf-v6e1/xprof/rref_reduced
+  memory_profile: /tmp/nf-v6e1/memory/rref_reduced.json
+targets:
+  target_wall_time_minutes_min: 30
+  target_wall_time_minutes_max: 60
+  require_no_fallback: true
+artifacts:
+  work_dir: /tmp/nf-v6e1/rref_reduced/work
+  report_dir: /tmp/nf-v6e1/rref_reduced/report
+  commit_policy: compact_reports_only

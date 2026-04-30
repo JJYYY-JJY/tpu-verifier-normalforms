@@ -1,7 +1,8 @@
 # v6e1 Configs
 
-These YAML files define CertiNF-v6e profile specs. The RREF MatrixFormer smoke
-and large profile are consumed by `scripts/rref_v6e_profile.py`.
+These YAML files define CertiNF-v6e profile specs. The RREF MatrixFormer smoke,
+reduced Colab, and large target profiles are consumed by
+`scripts/rref_v6e_profile.py`.
 
 The executable v1.0-beta1 RREF surface is:
 
@@ -80,7 +81,20 @@ nf-agent profile hnf-growth \
   --candidate-limit 64
 ```
 
-Colab TPU acceptance uses `configs/v6e1/rref_large_profile.yaml`:
+Reduced Colab TPU execution uses `configs/v6e1/rref_colab_reduced_profile.yaml`.
+This is the notebook default because it keeps the real 32x32/F_1009
+MatrixFormer/Zarr/verifier-beam path while bounding the run to a practical
+Colab window:
+
+```bash
+python scripts/rref_v6e_profile.py \
+  --config configs/v6e1/rref_colab_reduced_profile.yaml \
+  --work-dir /tmp/nf-v6e1/rref_reduced/work \
+  --out-dir /tmp/nf-v6e1/rref_reduced/report
+```
+
+Full Colab TPU acceptance keeps `configs/v6e1/rref_large_profile.yaml` as the
+target spec:
 
 ```bash
 python scripts/rref_v6e_profile.py \

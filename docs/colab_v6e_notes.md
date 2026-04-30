@@ -11,10 +11,11 @@ teacher, rollout, or benchmark behavior. A Colab TPU v6e runtime may accelerate
 the JAX training cell, but the recommended smoke parameters below are small
 enough for CPU validation.
 
-For large Apple M4 / Colab v6e-1 measured runs, use
-`docs/colab_v6e_measured_run.md`. Those runs track only compact JSON and
-Markdown summaries under `results/measured/`; NPZ shards, checkpoints, raw logs,
-and Colab PDFs stay untracked.
+For the reduced Colab v6e-1 MatrixFormer/Zarr profile, use
+`docs/colab_v6e_measured_run.md` and
+`notebooks/rref_v6e_measured_run.ipynb`. That path downloads only compact
+`summary.json` and `report.md` from `/tmp/nf-v6e1/rref_reduced/report`; Zarr
+shards, checkpoints, raw logs, and Colab PDFs stay untracked.
 
 Before opening Colab, run the local preflight in
 `docs/pre_colab_preflight.md`. Colab should accelerate the RREF training smoke;

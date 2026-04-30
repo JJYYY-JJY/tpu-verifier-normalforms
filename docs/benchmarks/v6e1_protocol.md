@@ -88,13 +88,25 @@ python scripts/rref_v6e_profile.py \
   --out-dir /tmp/nf-v6e1/rref_matrixformer_smoke/report
 ```
 
-Colab v6e smoke:
+Reduced Colab v6e profile:
 
 - 32x32 over `F_1009`;
+- Zarr `count: 2048`, `max_backward_ops: 64`;
 - batch size `auto`;
+- train 500 steps with `checkpoint_every: 100`;
+- verifier beam width 8, horizon 64;
 - compile, train, beam/search, CPU verifier, and report stages complete.
 
-Remote command:
+Notebook/API command equivalent:
+
+```bash
+python scripts/rref_v6e_profile.py \
+  --config configs/v6e1/rref_colab_reduced_profile.yaml \
+  --work-dir /tmp/nf-v6e1/rref_reduced/work \
+  --out-dir /tmp/nf-v6e1/rref_reduced/report
+```
+
+Full target spec:
 
 ```bash
 python scripts/rref_v6e_profile.py \

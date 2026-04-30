@@ -4,12 +4,14 @@ import argparse
 import json
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal, cast
 
 import yaml  # type: ignore[import-untyped]
 
 JsonDict = dict[str, Any]
+ProgressCallback = Callable[[str, JsonDict], None]
 SCHEMA_VERSION = "rref-v6e-profile-v1"
 
 
@@ -37,7 +39,13 @@ def main(argv: list[str] | None = None) -> int:
     return 0 if payload["status"] == "ok" else 1
 
 
-def run_profile(config_path: Path, work_dir: Path, out_dir: Path) -> JsonDict:
+def run_profile(
+    config_path: Path,
+    work_dir: Path,
+    out_dir: Path,
+    *,
+    progress: ProgressCallback | None = None,
+) -> JsonDict:
     from nf_agent.data.rref_backward_shards import write_rref_backward_shard
     from nf_agent.data.rref_state_shards import (
         RREFStateActionSamples,
@@ -57,6 +65,15 @@ def run_profile(config_path: Path, work_dir: Path, out_dir: Path) -> JsonDict:
 
     status_probe = collect_v6e_status(required_backend=required_backend)
     assert_backend(str(status_probe["jax"]["backend"]), required_backend)
+    _emit_progress(
+        progress,
+        "backend",
+        {
+            "backend": status_probe["jax"]["backend"],
+            "local_device_count": status_probe["jax"].get("local_device_count"),
+            "required_backend": required_backend,
+        },
+    )
 
     work_dir.mkdir(parents=True, exist_ok=True)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -72,23 +89,57 @@ def run_profile(config_path: Path, work_dir: Path, out_dir: Path) -> JsonDict:
     data_config = _mapping(config.get("data"), "data")
     count = _positive_int(data_config.get("count"), "data.count")
     seed_start = _int(data_config.get("seed_start", 0), "data.seed_start")
+    max_backward_ops = _positive_int(
+        data_config.get("max_backward_ops", 4),
+        "data.max_backward_ops",
+    )
     write_rref_backward_shard(
         backward_config,
         count=count,
         seed_start=seed_start,
         out_path=trace_path,
     )
+    _emit_progress(
+        progress,
+        "backward_shard",
+        {
+            "path": str(trace_path),
+            "format": data_format,
+            "count": count,
+            "max_backward_ops": max_backward_ops,
+        },
+    )
     write_rref_state_shard(trace_path, state_path)
+    _arrays, state_metadata = load_rref_state_shard(state_path)
+    _emit_progress(
+        progress,
+        "state_shard",
+        {
+            "path": str(state_path),
+            "trace_count": state_metadata["trace_count"],
+            "flat_count": state_metadata["flat_count"],
+            "max_steps": state_metadata["max_steps"],
+        },
+    )
     samples = RREFStateActionSamples(state_path)
 
     model_config = _mapping(config.get("model"), "model")
     train_config = _mapping(config.get("train"), "train")
     batch_size = _resolve_batch_size(train_config.get("batch_size"), len(samples))
+    learning_rate = _positive_float(
+        train_config.get("learning_rate", 0.001),
+        "train.learning_rate",
+    )
+    checkpoint_every = _positive_int(
+        train_config.get("checkpoint_every", 1),
+        "train.checkpoint_every",
+    )
     train_result = train_rref_matrixformer(
         RREFMatrixFormerTrainConfig(
             data_path=state_path,
             steps=_positive_int(train_config.get("steps"), "train.steps"),
             batch_size=batch_size,
+            learning_rate=learning_rate,
             seed=_int(train_config.get("seed", 0), "train.seed"),
             out_dir=ckpt_dir,
             row_embedding_dim=_positive_int(
@@ -102,7 +153,20 @@ def run_profile(config_path: Path, work_dir: Path, out_dir: Path) -> JsonDict:
             hidden_dim=_positive_int(model_config.get("hidden_dim", 256), "model.hidden_dim"),
             layers=_positive_int(model_config.get("layers", 2), "model.layers"),
             num_heads=_positive_int(model_config.get("num_heads", 4), "model.num_heads"),
+            checkpoint_every=checkpoint_every,
         )
+    )
+    _emit_progress(
+        progress,
+        "training",
+        {
+            "status": train_result["status"],
+            "final_step": train_result["final_step"],
+            "latest_step": train_result["latest_step"],
+            "final_loss": train_result["final_loss"],
+            "batch_size": batch_size,
+            "checkpoint_every": checkpoint_every,
+        },
     )
 
     rollout_config = _mapping(config.get("rollout"), "rollout")
@@ -130,7 +194,17 @@ def run_profile(config_path: Path, work_dir: Path, out_dir: Path) -> JsonDict:
     replayed = replay_row_ops(beam_result.initial_matrix, beam_result.ops, beam_result.modulus)
     exact_replay_ok = replayed == beam_result.final_matrix
     exact_final_is_rref = is_rref_modp(beam_result.final_matrix, beam_result.modulus)
-    _arrays, state_metadata = load_rref_state_shard(state_path)
+    _emit_progress(
+        progress,
+        "beam",
+        {
+            "status": beam_result.status,
+            "success": beam_result.success,
+            "step_count": beam_result.step_count,
+            "replay_ok": beam_result.replay_ok,
+            "final_is_rref": beam_result.final_is_rref,
+        },
+    )
 
     matrix = _mapping(config.get("matrix"), "matrix")
     field = _mapping(config.get("field"), "field")
@@ -165,6 +239,8 @@ def run_profile(config_path: Path, work_dir: Path, out_dir: Path) -> JsonDict:
             "final_loss": train_result["final_loss"],
             "parameters_changed": train_result["parameters_changed"],
             "batch_size": batch_size,
+            "learning_rate": learning_rate,
+            "checkpoint_every": train_result["checkpoint_every"],
             "per_head_metrics": train_result["per_head_metrics"],
         },
         "beam": {
@@ -187,6 +263,15 @@ def run_profile(config_path: Path, work_dir: Path, out_dir: Path) -> JsonDict:
         "no_fallback_statement": NO_FALLBACK_STATEMENT,
     }
     _write_outputs(payload, out_dir)
+    _emit_progress(
+        progress,
+        "output",
+        {
+            "status": payload["status"],
+            "summary_json": str(out_dir / "summary.json"),
+            "report_md": str(out_dir / "report.md"),
+        },
+    )
     return payload
 
 
@@ -222,6 +307,24 @@ def _positive_int(value: object, name: str) -> int:
     if integer <= 0:
         raise RuntimeError(f"{name} must be positive")
     return integer
+
+
+def _positive_float(value: object, name: str) -> float:
+    if not isinstance(value, int | float) or isinstance(value, bool):
+        raise RuntimeError(f"{name} must be a number")
+    number = float(value)
+    if number <= 0.0:
+        raise RuntimeError(f"{name} must be positive")
+    return number
+
+
+def _emit_progress(
+    progress: ProgressCallback | None,
+    stage: str,
+    payload: JsonDict,
+) -> None:
+    if progress is not None:
+        progress(stage, payload)
 
 
 def _resolve_batch_size(value: object, sample_count: int) -> int:
@@ -277,6 +380,8 @@ def _render_report(payload: JsonDict) -> str:
             f"- Backend: `{payload['status_probe']['jax']['backend']}`",
             f"- Task: `{json.dumps(payload['task'], sort_keys=True)}`",
             f"- Data format: `{payload['data']['format']}`",
+            f"- Train checkpoint every: `{payload['train']['checkpoint_every']}`",
+            f"- Train learning rate: `{payload['train']['learning_rate']}`",
             f"- Train final loss: `{payload['train']['final_loss']:.6g}`",
             f"- Beam status: `{payload['beam']['status']}`",
             f"- Exact replay ok: `{payload['exact_cpu_verifier']['replay_ok']}`",

@@ -39,25 +39,35 @@ def test_rref_v6e_measured_notebook_has_clear_jupyter_schema() -> None:
             assert cell["outputs"] == []
 
 
-def test_rref_v6e_measured_notebook_runs_large_colab_profile() -> None:
+def test_rref_v6e_measured_notebook_runs_reduced_colab_profile() -> None:
     source = _source_text(_load_notebook())
 
     required_snippets = (
-        "colab-v6e1-large",
-        "scripts/rref_measured_run.py",
+        "colab-v6e1-rref-reduced-32x32-mod1009",
+        "rref_colab_reduced_profile.yaml",
+        "run_profile",
+        "scripts/rref_v6e_profile.py",
         "JAX_PLATFORMS",
         "tpu,cpu",
-        "/tmp/nf-rref-colab-v6e1-large",
-        "/tmp/rref_8x8_mod101_colab_v6e1_large.json",
-        "/tmp/rref_8x8_mod101_colab_v6e1_large.md",
-        "results/measured/rref_8x8_mod101_colab_v6e1_large.json",
-        "results/measured/rref_8x8_mod101_colab_v6e1_large.md",
+        "/tmp/nf-v6e1/rref_reduced/work",
+        "/tmp/nf-v6e1/rref_reduced/report",
+        "/tmp/nf-v6e1/rref_reduced/report/summary.json",
+        "/tmp/nf-v6e1/rref_reduced/report/report.md",
         "files.download",
         "getpass",
         "remote\", \"set-url\", \"origin\"",
     )
     for snippet in required_snippets:
         assert snippet in source
+
+    forbidden_snippets = (
+        "scripts/rref_measured_run.py",
+        "colab-v6e1-large",
+        "rref_8x8_mod101_colab_v6e1_large",
+        "results/measured/rref_8x8_mod101_colab_v6e1_large",
+    )
+    for snippet in forbidden_snippets:
+        assert snippet not in source
 
 
 def test_rref_v6e_measured_notebook_requires_python_312_and_tpu() -> None:

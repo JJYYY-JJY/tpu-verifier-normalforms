@@ -22,11 +22,11 @@ exact row-preconditioned growth-search beta. Local CPU smoke is implemented;
 real TPU v6e success remains a remote acceptance gate. See `docs/v0.9_closure.md`,
 `docs/benchmarks/v6e1_protocol.md`, and `results/measured/`.
 
-Known v6e bottleneck: the tracked `colab-v6e1-large` run is not a saturation
-workload. TPU training is faster than Apple M4 by the harness proxy, but
-end-to-end time is dominated by host/sample-wise benchmark rollout. The current
-`PivotMLP` neural policy reports `max_steps_exceeded` on all 512 benchmark
-samples; the leftmost teacher remains an explicit baseline only.
+Current Colab default: `configs/v6e1/rref_colab_reduced_profile.yaml`, exposed
+through `notebooks/rref_v6e_measured_run.ipynb`, runs the real 32x32/F_1009
+MatrixFormer/Zarr/verifier-beam path with reduced shard and train duration for
+a stable TPU v6e Colab window. `configs/v6e1/rref_large_profile.yaml` remains
+the full target spec, not the notebook default.
 
 The first vertical slice is finite-field RREF over `F_101`:
 
