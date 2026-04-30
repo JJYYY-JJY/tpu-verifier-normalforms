@@ -14,13 +14,13 @@ See:
 - `docs/benchmarks/v6e1_protocol.md`
 - `configs/v6e1/`
 
-## Current Baseline: v1.0-beta1
+## Current Baseline: v1.1 HNF Exact Growth-Search Beta
 
 The current baseline is the verifier-first RREF/HNF/SNF stack plus the RREF
-v1.0-beta1 MatrixFormer/Zarr/verifier-beam profile surface. Local CPU smoke is
-implemented; real TPU v6e success is a remote acceptance gate. See
-`docs/v0.9_closure.md`, `docs/benchmarks/v6e1_protocol.md`, and
-`results/measured/`.
+v1.0-beta1 MatrixFormer/Zarr/verifier-beam profile surface and the v1.1 HNF
+exact row-preconditioned growth-search beta. Local CPU smoke is implemented;
+real TPU v6e success remains a remote acceptance gate. See `docs/v0.9_closure.md`,
+`docs/benchmarks/v6e1_protocol.md`, and `results/measured/`.
 
 Known v6e bottleneck: the tracked `colab-v6e1-large` run is not a saturation
 workload. TPU training is faster than Apple M4 by the harness proxy, but
@@ -266,8 +266,11 @@ PY
 See `docs/trajectory_shards.md` for the fixed NPZ schemas; RREF backward and
 state/action shards also support Zarr storage with the same arrays and metadata.
 RREF shards support teachers (`leftmost`, `min_fill`). HNF shards use `row_hnf`
-as an explicit oracle/dataset source and encode integer row operations over a shard-local
-scalar vocabulary.
+as an explicit oracle/dataset source and encode integer row operations over a
+shard-local scalar vocabulary; the HNF growth-search beta adds
+`hnf-backward-trace-zarr-v1` plus `nf-agent profile hnf-growth` compact
+summaries comparing the `row_hnf` baseline with exact
+`row_preconditioned_row_hnf` search.
 
 RREF backward trace shards use `rref-backward-trace-npz-v1`: each sample starts
 from a canonical exact RREF final, applies sampled invertible row operations to
@@ -281,8 +284,8 @@ are expanded into one flat `(state, action)` supervised example per row op plus
 one terminal stop example per trace. The shard also keeps trace-shaped tensors
 for replay checks. The alpha2 NPZ smoke path trains `RREFMatrixFormer` on these
 single-step examples and runs greedy `rollout rref-matrixformer` from
-`trace_states[sample_index, 0]`. Zarr ingestion, TPU batched beam/search, and
-profile runners remain deferred.
+`trace_states[sample_index, 0]`. Zarr ingestion and the local v6e profile runner
+are implemented; TPU-scale batched search remains a remote acceptance target.
 
 Check the latest local training checkpoint:
 
@@ -318,6 +321,13 @@ baseline for backward compatibility. Optional learned policies are
 `supervised_greedy`, `dagger_greedy`, `actor_critic_greedy`, and `beam`. Each
 policy is checked by exact row-operation replay and `is_row_hnf`; failed neural
 rollouts are reported directly and are not replaced by `row_hnf`.
+
+The HNF growth profile is an exact v1.1 beta search, not an HNF MatrixFormer
+training or TPU beam path. It deterministically tries unimodular row-swap
+preconditioners, then runs `row_hnf`, validates each accepted candidate by exact
+`replay_integer_row_ops` and `is_row_hnf`, and reports only compact
+baseline/best metrics plus improvement counts. Samples omit raw inputs, finals,
+matrices, operation traces, and full search traces.
 
 Integer HNF uses a row-style convention: nonzero rows precede zero rows, pivot
 columns strictly increase, pivots are positive, entries below pivots are zero,
@@ -392,6 +402,6 @@ threshold verdict comparing `dagger_actor_critic_beam` with
 - `v1.0-alpha1`: RREF backward trace and state/action shards.
 - `v1.0-alpha2`: RREF MatrixFormer smoke training and rollout.
 - `v1.0-beta1`: v6e RREF batched verifier beam.
-- `v1.1`: HNF coefficient-growth search.
+- `v1.1`: exact row-preconditioned HNF coefficient-growth search beta.
 - `v1.2`: SNF certificate search plus Lean checker samples.
 - `v1.3`: optional Pallas hot-path experiments after v1.0/v1.1 stabilize.

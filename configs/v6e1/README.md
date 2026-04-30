@@ -13,6 +13,11 @@ The executable v1.0-beta1 RREF surface is:
 - `nf-agent report v6e-profile`
 - `python scripts/rref_v6e_profile.py`
 
+The executable v1.1 HNF exact-search beta surface is:
+
+- `nf-agent data make-hnf-backward-shard`
+- `nf-agent profile hnf-growth`
+
 Local Zarr smoke:
 
 ```bash
@@ -59,6 +64,20 @@ python scripts/rref_v6e_profile.py \
   --config configs/v6e1/rref_matrixformer_smoke.yaml \
   --work-dir /tmp/nf-v6e1/rref_matrixformer_smoke/work \
   --out-dir /tmp/nf-v6e1/rref_matrixformer_smoke/report
+```
+
+HNF growth-search beta. This is exact row-preconditioned search over
+unimodular row swaps followed by `row_hnf`; it does not train or run an HNF
+MatrixFormer.
+
+```bash
+nf-agent profile hnf-growth \
+  --config configs/v6e1/hnf_growth_search.yaml \
+  --work-dir /tmp/nf-v6e1/hnf_growth/work \
+  --out-dir /tmp/nf-v6e1/hnf_growth/report \
+  --family sparse_8x8 \
+  --count 8 \
+  --candidate-limit 64
 ```
 
 Colab TPU acceptance uses `configs/v6e1/rref_large_profile.yaml`:
