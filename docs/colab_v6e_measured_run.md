@@ -1,6 +1,6 @@
-# Colab v6e Reduced Profile
+# Colab v6e Reduced Profiles
 
-This runbook records the reduced RREF v6e-1 MatrixFormer/Zarr profile without
+This runbook records reduced RREF v6e-1 MatrixFormer/Zarr profiles without
 tracking Zarr shards, checkpoints, raw logs, or Colab PDFs. The tracked source
 artifact is the notebook; generated outputs stay under `/tmp` unless a compact
 summary is intentionally imported later.
@@ -8,7 +8,7 @@ summary is intentionally imported later.
 For Colab, open `notebooks/rref_v6e_measured_run.ipynb`. It clones the repo,
 installs the package, probes TPU in a subprocess, calls `run_profile(...)`
 through the Python API, displays compact stage progress, and downloads the two
-report files from `/tmp/nf-v6e1/rref_reduced/report`.
+report files from the selected profile report directory.
 
 The reduced profile keeps the same verifier-first path as the full v6e target:
 
@@ -28,7 +28,14 @@ assert that the real profile selected backend is exactly `tpu`. References:
 [`Cloud TPU v6e`](https://cloud.google.com/tpu/docs/v6e-training),
 [`JAX platforms`](https://docs.jax.dev/en/latest/config_options.html#common-configuration-options).
 
-Reduced default:
+## Completed 500-Step Smoke
+
+The completed reduced smoke is imported as compact evidence:
+
+- `results/measured/rref_32x32_mod1009_colab_v6e1_reduced_500step.json`
+- `results/measured/rref_32x32_mod1009_colab_v6e1_reduced_500step.md`
+
+It used `configs/v6e1/rref_colab_reduced_profile.yaml`:
 
 - config: `configs/v6e1/rref_colab_reduced_profile.yaml`
 - task: 32x32 dense RREF over `F_1009`
@@ -39,10 +46,30 @@ Reduced default:
 - work dir: `/tmp/nf-v6e1/rref_reduced/work`
 - report dir: `/tmp/nf-v6e1/rref_reduced/report`
 
+Observed result: backend `tpu`, 2048 traces, 500 train steps, wall time
+`531.65s`, top-level `status: ok`, and `beam.status: max_steps_exceeded`.
+Here top-level `status: ok` means the profile pipeline completed and exact
+replay was checked. Beam solve status must be read from `beam.status` and
+`beam.success`.
+
+## Next Colab Default
+
+The next notebook default is the longer reduced profile:
+
+- config: `configs/v6e1/rref_colab_reduced_long_profile.yaml`
+- task: 32x32 dense RREF over `F_1009`
+- data: Zarr, `count: 8192`, `max_backward_ops: 96`
+- model: row/col embeddings 64, hidden 256, 4 layers, 4 heads
+- train: `steps: 2000`, `batch_size: auto`, `checkpoint_every: 250`
+- rollout: `beam_width: 8`, `max_steps: 96`, `batch_size: auto`
+- expected wall time: about 30-40 minutes on a similar Colab v6e-1 runtime
+- work dir: `/tmp/nf-v6e1/rref_reduced_long/work`
+- report dir: `/tmp/nf-v6e1/rref_reduced_long/report`
+
 Download only:
 
-- `/tmp/nf-v6e1/rref_reduced/report/summary.json`
-- `/tmp/nf-v6e1/rref_reduced/report/report.md`
+- `/tmp/nf-v6e1/rref_reduced_long/report/summary.json`
+- `/tmp/nf-v6e1/rref_reduced_long/report/report.md`
 
 Do not commit the Colab PDF, `/tmp` work directory, Zarr shards, checkpoints, or
 raw stdout/stderr logs.

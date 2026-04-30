@@ -1,0 +1,82 @@
+{
+  "beam": {
+    "beam_width": 8,
+    "device_batch_size": 8,
+    "expanded_count": 4040,
+    "final_is_rref": false,
+    "pruned_count": 3528,
+    "replay_ok": true,
+    "score": -787.9975147247314,
+    "status": "max_steps_exceeded",
+    "step_count": 64,
+    "success": false
+  },
+  "data": {
+    "flat_count": 133120,
+    "format": "zarr",
+    "max_steps": 65,
+    "state_schema_version": "rref-state-action-npz-v1",
+    "trace_count": 2048,
+    "trace_schema_version": "rref-backward-trace-npz-v1"
+  },
+  "exact_cpu_verifier": {
+    "final_is_rref": false,
+    "replay_ok": true
+  },
+  "no_fallback_statement": "No hidden teacher fallback: exact replay/verifier stages are authoritative; neural failures remain explicit statuses.",
+  "profile": "colab-v6e1-rref-reduced-32x32-mod1009",
+  "schema_version": "rref-v6e-profile-v1",
+  "status": "ok",
+  "status_probe": {
+    "hbm": {
+      "status": "available",
+      "total_bytes": 33550237184,
+      "used_bytes": 33280
+    },
+    "host": {
+      "cpu_count_logical": 44,
+      "cpu_count_physical": 22,
+      "ram": {
+        "available_bytes": 177820909568,
+        "total_bytes": 185701761024
+      }
+    },
+    "jax": {
+      "backend": "tpu",
+      "devices": [
+        {
+          "device_kind": "TPU v6 lite",
+          "memory_bytes_in_use": 33280,
+          "memory_bytes_limit": 33550237184,
+          "platform": "tpu"
+        }
+      ],
+      "local_device_count": 1,
+      "required_backend": "tpu"
+    },
+    "no_fallback_statement": "No hidden teacher fallback: exact replay/verifier stages are authoritative; neural failures remain explicit statuses.",
+    "schema_version": "v6e-status-v1"
+  },
+  "task": {
+    "cols": 32,
+    "modulus": 1009,
+    "rows": 32
+  },
+  "train": {
+    "batch_size": 64,
+    "checkpoint_every": 100,
+    "final_loss": 15.074149131774902,
+    "final_step": 500,
+    "latest_step": 500,
+    "learning_rate": 0.001,
+    "parameters_changed": true,
+    "per_head_metrics": {
+      "action_kind_loss": 1.0637917518615723,
+      "action_scalar_loss": 7.071413040161133,
+      "action_source_loss": 3.4484238624572754,
+      "action_target_loss": 3.490520477294922
+    },
+    "status": "ok"
+  },
+  "wall_time_seconds": 531.651543335
+}

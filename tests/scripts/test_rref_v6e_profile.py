@@ -12,6 +12,12 @@ SCRIPT_PATH = Path(__file__).resolve().parents[2] / "scripts" / "rref_v6e_profil
 REDUCED_CONFIG_PATH = (
     Path(__file__).resolve().parents[2] / "configs" / "v6e1" / "rref_colab_reduced_profile.yaml"
 )
+LONG_CONFIG_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "configs"
+    / "v6e1"
+    / "rref_colab_reduced_long_profile.yaml"
+)
 
 
 def _load_script() -> ModuleType:
@@ -113,6 +119,36 @@ def test_rref_colab_reduced_profile_has_bounded_colab_defaults() -> None:
     assert config["rollout"]["beam_width"] == 8
     assert config["rollout"]["max_steps"] == 64
     assert config["artifacts"]["report_dir"] == "/tmp/nf-v6e1/rref_reduced/report"
+
+
+def test_rref_colab_reduced_long_profile_is_next_colab_default() -> None:
+    config = yaml.safe_load(LONG_CONFIG_PATH.read_text(encoding="utf-8"))
+
+    assert config["profile"] == {
+        "name": "colab-v6e1-rref-reduced-long-32x32-mod1009",
+        "required_backend": "tpu",
+    }
+    assert config["field"]["modulus"] == 1009
+    assert config["matrix"] == {"family": "dense", "rows": 32, "cols": 32}
+    assert config["data"]["format"] == "zarr"
+    assert config["data"]["count"] == 8192
+    assert config["data"]["max_backward_ops"] == 96
+    assert config["model"] == {
+        "name": "rref-matrixformer",
+        "row_embedding_dim": 64,
+        "col_embedding_dim": 64,
+        "hidden_dim": 256,
+        "layers": 4,
+        "num_heads": 4,
+    }
+    assert config["train"]["steps"] == 2000
+    assert config["train"]["batch_size"] == "auto"
+    assert config["train"]["learning_rate"] == 0.001
+    assert config["train"]["checkpoint_every"] == 250
+    assert config["rollout"]["beam_width"] == 8
+    assert config["rollout"]["max_steps"] == 96
+    assert config["artifacts"]["work_dir"] == "/tmp/nf-v6e1/rref_reduced_long/work"
+    assert config["artifacts"]["report_dir"] == "/tmp/nf-v6e1/rref_reduced_long/report"
 
 
 def test_rref_v6e_profile_required_tpu_fails_before_training(tmp_path: Path) -> None:

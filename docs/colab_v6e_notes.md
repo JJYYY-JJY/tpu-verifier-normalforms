@@ -14,8 +14,10 @@ enough for CPU validation.
 For the reduced Colab v6e-1 MatrixFormer/Zarr profile, use
 `docs/colab_v6e_measured_run.md` and
 `notebooks/rref_v6e_measured_run.ipynb`. That path downloads only compact
-`summary.json` and `report.md` from `/tmp/nf-v6e1/rref_reduced/report`; Zarr
-shards, checkpoints, raw logs, and Colab PDFs stay untracked.
+`summary.json` and `report.md` from the profile report directory; Zarr shards,
+checkpoints, raw logs, and Colab PDFs stay untracked. The 500-step TPU smoke is
+already tracked under `results/measured/`; the notebook default is now the
+longer reduced profile for the next 30-60 minute Colab run.
 
 Before opening Colab, run the local preflight in
 `docs/pre_colab_preflight.md`. Colab should accelerate the RREF training smoke;

@@ -81,16 +81,27 @@ nf-agent profile hnf-growth \
   --candidate-limit 64
 ```
 
-Reduced Colab TPU execution uses `configs/v6e1/rref_colab_reduced_profile.yaml`.
-This is the notebook default because it keeps the real 32x32/F_1009
-MatrixFormer/Zarr/verifier-beam path while bounding the run to a practical
-Colab window:
+The completed reduced Colab TPU smoke used
+`configs/v6e1/rref_colab_reduced_profile.yaml`. Keep it unchanged so the
+tracked 500-step artifact remains paired with its source profile:
 
 ```bash
 python scripts/rref_v6e_profile.py \
   --config configs/v6e1/rref_colab_reduced_profile.yaml \
   --work-dir /tmp/nf-v6e1/rref_reduced/work \
   --out-dir /tmp/nf-v6e1/rref_reduced/report
+```
+
+The next Colab notebook default uses
+`configs/v6e1/rref_colab_reduced_long_profile.yaml`. It keeps the real
+32x32/F_1009 MatrixFormer/Zarr/verifier-beam path, raises the trace/train/beam
+horizon, and targets a 30-60 minute Colab v6e-1 window:
+
+```bash
+python scripts/rref_v6e_profile.py \
+  --config configs/v6e1/rref_colab_reduced_long_profile.yaml \
+  --work-dir /tmp/nf-v6e1/rref_reduced_long/work \
+  --out-dir /tmp/nf-v6e1/rref_reduced_long/report
 ```
 
 Full Colab TPU acceptance keeps `configs/v6e1/rref_large_profile.yaml` as the

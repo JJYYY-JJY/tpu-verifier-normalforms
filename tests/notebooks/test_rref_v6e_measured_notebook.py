@@ -43,16 +43,16 @@ def test_rref_v6e_measured_notebook_runs_reduced_colab_profile() -> None:
     source = _source_text(_load_notebook())
 
     required_snippets = (
-        "colab-v6e1-rref-reduced-32x32-mod1009",
-        "rref_colab_reduced_profile.yaml",
+        "colab-v6e1-rref-reduced-long-32x32-mod1009",
+        "rref_colab_reduced_long_profile.yaml",
         "run_profile",
         "scripts/rref_v6e_profile.py",
         "JAX_PLATFORMS",
         "tpu,cpu",
-        "/tmp/nf-v6e1/rref_reduced/work",
-        "/tmp/nf-v6e1/rref_reduced/report",
-        "/tmp/nf-v6e1/rref_reduced/report/summary.json",
-        "/tmp/nf-v6e1/rref_reduced/report/report.md",
+        "/tmp/nf-v6e1/rref_reduced_long/work",
+        "/tmp/nf-v6e1/rref_reduced_long/report",
+        "/tmp/nf-v6e1/rref_reduced_long/report/summary.json",
+        "/tmp/nf-v6e1/rref_reduced_long/report/report.md",
         "SRC_ROOT = REPO_ROOT / \"src\"",
         "ensure_repo_import_path",
         "nf_agent import ok",
@@ -68,6 +68,7 @@ def test_rref_v6e_measured_notebook_runs_reduced_colab_profile() -> None:
         "colab-v6e1-large",
         "rref_8x8_mod101_colab_v6e1_large",
         "results/measured/rref_8x8_mod101_colab_v6e1_large",
+        "CONFIG_REL = Path(\"configs/v6e1/rref_colab_reduced_profile.yaml\")",
     )
     for snippet in forbidden_snippets:
         assert snippet not in source

@@ -88,7 +88,7 @@ python scripts/rref_v6e_profile.py \
   --out-dir /tmp/nf-v6e1/rref_matrixformer_smoke/report
 ```
 
-Reduced Colab v6e profile:
+Completed reduced Colab v6e smoke:
 
 - 32x32 over `F_1009`;
 - Zarr `count: 2048`, `max_backward_ops: 64`;
@@ -97,13 +97,41 @@ Reduced Colab v6e profile:
 - verifier beam width 8, horizon 64;
 - compile, train, beam/search, CPU verifier, and report stages complete.
 
-Notebook/API command equivalent:
+Tracked compact artifacts:
+
+- `results/measured/rref_32x32_mod1009_colab_v6e1_reduced_500step.json`;
+- `results/measured/rref_32x32_mod1009_colab_v6e1_reduced_500step.md`.
+
+Top-level `status: ok` means the profile pipeline completed and exact replay
+was checked. Beam solve status is separate: read `beam.status` and
+`beam.success`. The imported 500-step smoke ended with
+`beam.status: max_steps_exceeded`.
+
+Smoke command equivalent:
 
 ```bash
 python scripts/rref_v6e_profile.py \
   --config configs/v6e1/rref_colab_reduced_profile.yaml \
   --work-dir /tmp/nf-v6e1/rref_reduced/work \
   --out-dir /tmp/nf-v6e1/rref_reduced/report
+```
+
+Next reduced-long Colab default:
+
+- 32x32 over `F_1009`;
+- Zarr `count: 8192`, `max_backward_ops: 96`;
+- batch size `auto`;
+- train 2000 steps with `checkpoint_every: 250`;
+- verifier beam width 8, horizon 96;
+- expected wall time about 30-40 minutes on a similar Colab v6e-1 runtime.
+
+Notebook/API command equivalent:
+
+```bash
+python scripts/rref_v6e_profile.py \
+  --config configs/v6e1/rref_colab_reduced_long_profile.yaml \
+  --work-dir /tmp/nf-v6e1/rref_reduced_long/work \
+  --out-dir /tmp/nf-v6e1/rref_reduced_long/report
 ```
 
 Full target spec:

@@ -22,11 +22,16 @@ exact row-preconditioned growth-search beta. Local CPU smoke is implemented;
 real TPU v6e success remains a remote acceptance gate. See `docs/v0.9_closure.md`,
 `docs/benchmarks/v6e1_protocol.md`, and `results/measured/`.
 
-Current Colab default: `configs/v6e1/rref_colab_reduced_profile.yaml`, exposed
+Current Colab default: `configs/v6e1/rref_colab_reduced_long_profile.yaml`, exposed
 through `notebooks/rref_v6e_measured_run.ipynb`, runs the real 32x32/F_1009
 MatrixFormer/Zarr/verifier-beam path with reduced shard and train duration for
 a stable TPU v6e Colab window. `configs/v6e1/rref_large_profile.yaml` remains
 the full target spec, not the notebook default.
+
+Completed TPU smoke evidence is tracked as compact artifacts:
+`results/measured/rref_32x32_mod1009_colab_v6e1_reduced_500step.json` and
+`.md`. That 500-step run completed the profile pipeline on TPU with exact replay
+checked; its verifier beam explicitly ended as `max_steps_exceeded`.
 
 The first vertical slice is finite-field RREF over `F_101`:
 
